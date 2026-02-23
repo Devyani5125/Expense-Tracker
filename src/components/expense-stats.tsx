@@ -8,9 +8,10 @@ import { DollarSign } from 'lucide-react';
 
 interface ExpenseStatsProps {
   expenses: Expense[];
+  currency?: string;
 }
 
-const ExpenseStats: React.FC<ExpenseStatsProps> = ({ expenses }) => {
+const ExpenseStats: React.FC<ExpenseStatsProps> = ({ expenses, currency }) => {
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
 
   const categoryTotals = expenses.reduce((acc, expense) => {
@@ -29,7 +30,7 @@ const ExpenseStats: React.FC<ExpenseStatsProps> = ({ expenses }) => {
           <DollarSign className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{formatCurrency(totalExpenses)}</div>
+          <div className="text-2xl font-bold">{formatCurrency(totalExpenses, currency)}</div>
         </CardContent>
       </Card>
       {Object.entries(categoryIcons).map(([category, Icon]) => {
@@ -41,7 +42,7 @@ const ExpenseStats: React.FC<ExpenseStatsProps> = ({ expenses }) => {
               <Icon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(total)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(total, currency)}</div>
             </CardContent>
           </Card>
         );

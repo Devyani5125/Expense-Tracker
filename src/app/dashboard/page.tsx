@@ -10,10 +10,12 @@ import { ExpenseTable } from '@/components/expense-table';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
+import { useUserProfile } from '@/hooks/use-user-profile';
 
 
 export default function Dashboard() {
   const { user, isUserLoading } = useUser();
+  const { userProfile } = useUserProfile();
   const router = useRouter();
   const { expenses, addExpense, updateExpense, deleteExpense, isLoading } = useExpenses(user?.uid);
   const [categoryFilter, setCategoryFilter] = useState<Category | 'all'>('all');
@@ -52,7 +54,7 @@ export default function Dashboard() {
              <div>Loading expenses...</div>
         ) : (
           <>
-            <ExpenseStats expenses={filteredExpenses} />
+            <ExpenseStats expenses={filteredExpenses} currency={userProfile?.preferredCurrency} />
             <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
               <Card className="xl:col-span-2">
                 <CardHeader>
@@ -71,7 +73,7 @@ export default function Dashboard() {
                     <CardDescription>A list of your latest transactions.</CardDescription>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <ExpenseTable expenses={filteredExpenses} onUpdateExpense={updateExpense} onDeleteExpense={deleteExpense} />
+                  <ExpenseTable expenses={filteredExpenses} onUpdateExpense={updateExpense} onDeleteExpense={deleteExpense} currency={userProfile?.preferredCurrency} />
                 </CardContent>
               </Card>
             </div>

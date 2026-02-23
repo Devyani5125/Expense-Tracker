@@ -24,7 +24,9 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <FirebaseClientProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            {children}
+            <main className="min-h-screen bg-gradient-to-br from-background via-muted to-background">
+              {children}
+            </main>
             <Toaster />
           </ThemeProvider>
         </FirebaseClientProvider>

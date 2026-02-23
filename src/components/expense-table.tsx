@@ -37,9 +37,10 @@ interface ExpenseTableProps {
   expenses: Expense[];
   onUpdateExpense: (expense: Expense) => void;
   onDeleteExpense: (id: string) => void;
+  currency?: string;
 }
 
-export function ExpenseTable({ expenses, onUpdateExpense, onDeleteExpense }: ExpenseTableProps) {
+export function ExpenseTable({ expenses, onUpdateExpense, onDeleteExpense, currency }: ExpenseTableProps) {
   const [editingExpense, setEditingExpense] = React.useState<Expense | null>(null);
   const [deletingExpenseId, setDeletingExpenseId] = React.useState<string | null>(null);
 
@@ -81,7 +82,7 @@ export function ExpenseTable({ expenses, onUpdateExpense, onDeleteExpense }: Exp
                     <div className="font-medium">{expense.title}</div>
                     <Badge variant="outline">{expense.paymentMethod}</Badge>
                   </TableCell>
-                  <TableCell>{formatCurrency(expense.amount)}</TableCell>
+                  <TableCell>{formatCurrency(expense.amount, currency)}</TableCell>
                   <TableCell>{format(expense.date, 'PP')}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
