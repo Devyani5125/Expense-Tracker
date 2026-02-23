@@ -1,60 +1,47 @@
 "use client";
-
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
+import { collection, doc } from 'firebase/firestore';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
 import { Expense } from '@/lib/types';
+import { WithId } from '@/firebase/firestore/use-collection';
 
-const STORAGE_KEY = 'expensewise-expenses';
+export function useExpenses(userId?: string) {
+  const firestore = useFirestore();
 
-export function useExpenses() {
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const expensesColRef = useMemoFirebase(() => {
+    if (!firestore || !userId) return null;
+    return collection(firestore, 'users', userId, 'expenses');
+  }, [firestore, userId]);
+  
+  const { data: expenses, isLoading, error } = useCollection<Expense>(expensesColRef);
 
-  useEffect(() => {
-    try {
-      const storedExpenses = localStorage.getItem(STORAGE_KEY);
-      if (storedExpenses) {
-        const parsedExpenses = JSON.parse(storedExpenses, (key, value) => {
-            if (key === 'date') {
-                return new Date(value);
-            }
-            return value;
-        });
-        setExpenses(parsedExpenses);
-      }
-    } catch (error) {
-      console.error("Failed to load expenses from local storage:", error);
-    }
-    setIsLoaded(true);
-  }, []);
-
-  useEffect(() => {
-    if (isLoaded) {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
-      } catch (error) {
-        console.error("Failed to save expenses to local storage:", error);
-      }
-    }
-  }, [expenses, isLoaded]);
-
-  const addExpense = (expense: Omit<Expense, 'id'>) => {
-    const newExpense: Expense = { ...expense, id: crypto.randomUUID() };
-    setExpenses(prevExpenses => [newExpense, ...prevExpenses]);
+  const addExpense = (expense: Omit<WithId<Expense>, 'id' | 'userId'>) => {
+    if (!expensesColRef) return;
+    addDocumentNonBlocking(expensesColRef, { ...expense, userId });
   };
 
-  const updateExpense = (updatedExpense: Expense) => {
-    setExpenses(prevExpenses =>
-      prevExpenses.map(expense =>
-        expense.id === updatedExpense.id ? updatedExpense : expense
-      )
-    );
+  const updateExpense = (updatedExpense: WithId<Expense>) => {
+    if (!firestore || !userId) return;
+    const expenseRef = doc(firestore, 'users', userId, 'expenses', updatedExpense.id);
+    const { id, ...expenseData } = updatedExpense;
+    updateDocumentNonBlocking(expenseRef, expenseData);
   };
 
   const deleteExpense = (id: string) => {
-    setExpenses(prevExpenses =>
-      prevExpenses.filter(expense => expense.id !== id)
-    );
+    if (!firestore || !userId) return;
+    const expenseRef = doc(firestore, 'users', userId, 'expenses', id);
+    deleteDocumentNonBlocking(expenseRef);
   };
 
-  return { expenses, addExpense, updateExpense, deleteExpense };
+  const memoizedExpenses = useMemo(() => {
+    if (!expenses) return null;
+    return expenses.map(e => ({
+        ...e,
+        date: new Date(e.date)
+    }));
+  }, [expenses]);
+
+
+  return { expenses: memoizedExpenses, addExpense, updateExpense, deleteExpense, isLoading, error };
 }

@@ -1,60 +1,121 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
-import { Expense, Category } from '@/lib/types';
-import { useExpenses } from '@/hooks/use-expenses';
-import ExpenseHeader from '@/components/expense-header';
-import ExpenseStats from '@/components/expense-stats';
-import ExpenseChart from '@/components/expense-chart';
-import { ExpenseTable } from '@/components/expense-table';
+import { useState } from 'react';
+import { useAuth } from '@/firebase';
+import {
+  initiateEmailSignUp,
+  initiateEmailSignIn,
+  initiateAnonymousSignIn,
+} from '@/firebase/non-blocking-login';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import Logo from '@/components/logo';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { useRouter } from 'next/navigation';
+import { useUser } from '@/firebase';
 
-export default function Home() {
-  const { expenses, addExpense, updateExpense, deleteExpense } = useExpenses();
-  const [categoryFilter, setCategoryFilter] = useState<Category | 'all'>('all');
-  const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
+export default function LoginPage() {
+  const auth = useAuth();
+  const router = useRouter();
+  const { user, isUserLoading } = useUser();
 
-  const filteredExpenses = useMemo(() => {
-    return expenses.filter(expense => {
-      const categoryMatch = categoryFilter === 'all' || expense.category === categoryFilter;
-      const dateMatch = !dateFilter || new Date(expense.date).toDateString() === dateFilter.toDateString();
-      return categoryMatch && dateMatch;
-    });
-  }, [expenses, categoryFilter, dateFilter]);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  if (isUserLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (user) {
+    router.push('/dashboard');
+    return null;
+  }
+
+  const handleSignUp = (e: React.FormEvent) => {
+    e.preventDefault();
+    initiateEmailSignUp(auth, email, password);
+  };
+
+  const handleSignIn = (e: React.FormEvent) => {
+    e.preventDefault();
+    initiateEmailSignIn(auth, email, password);
+  };
+  
+  const handleAnonymousSignIn = () => {
+    initiateAnonymousSignIn(auth);
+  };
 
   return (
-    <div className="flex min-h-screen w-full flex-col">
-      <ExpenseHeader
-        onAddExpense={addExpense}
-        categoryFilter={categoryFilter}
-        setCategoryFilter={setCategoryFilter}
-        dateFilter={dateFilter}
-        setDateFilter={setDateFilter}
-      />
-      <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-        <ExpenseStats expenses={filteredExpenses} />
-        <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
-          <Card className="xl:col-span-2">
-            <CardHeader>
-                <CardTitle>Spending Patterns</CardTitle>
-                <CardDescription>A visual summary of your expenses over time.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="h-[300px] w-full">
-                    <ExpenseChart expenses={filteredExpenses} />
-                </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-                <CardTitle>Recent Expenses</CardTitle>
-                <CardDescription>A list of your latest transactions.</CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-               <ExpenseTable expenses={filteredExpenses} onUpdateExpense={updateExpense} onDeleteExpense={deleteExpense} />
-            </CardContent>
-          </Card>
-        </div>
+    <div className="flex flex-col min-h-screen">
+       <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 justify-between">
+        <Logo />
+        <ThemeToggle />
+      </header>
+      <main className="flex flex-1 items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Welcome to ExpenseWise</CardTitle>
+            <CardDescription>Sign in or create an account to continue</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="signin">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="signin">Sign In</TabsTrigger>
+                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+              </TabsList>
+              <TabsContent value="signin">
+                <form onSubmit={handleSignIn} className="space-y-4 pt-4">
+                  <Input
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                  <Input
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                  <Button type="submit" className="w-full">
+                    Sign In
+                  </Button>
+                </form>
+              </TabsContent>
+              <TabsContent value="signup">
+                <form onSubmit={handleSignUp} className="space-y-4 pt-4">
+                  <Input
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                  <Input
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                  <Button type="submit" className="w-full">
+                    Sign Up
+                  </Button>
+                </form>
+              </TabsContent>
+            </Tabs>
+             <div className="mt-4 text-center text-sm">
+              Or
+            </div>
+            <Button variant="outline" className="w-full mt-4" onClick={handleAnonymousSignIn}>
+              Continue as Guest
+            </Button>
+          </CardContent>
+        </Card>
       </main>
     </div>
   );

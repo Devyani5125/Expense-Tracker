@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Logo from './logo';
 import { ThemeToggle } from './theme-toggle';
 import { Button } from './ui/button';
-import { PlusCircle, X } from 'lucide-react';
+import { PlusCircle, X, LogOut } from 'lucide-react';
 import { ExpenseForm } from './expense-form';
 import { Expense, Category, categories } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -12,6 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Calendar } from './ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { useAuth } from '@/firebase';
 
 interface ExpenseHeaderProps {
   onAddExpense: (expense: Omit<Expense, 'id'>) => void;
@@ -29,6 +30,12 @@ const ExpenseHeader: React.FC<ExpenseHeaderProps> = ({
   setDateFilter,
 }) => {
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const auth = useAuth();
+
+  const handleSignOut = () => {
+    auth.signOut();
+  };
+
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
@@ -74,6 +81,9 @@ const ExpenseHeader: React.FC<ExpenseHeaderProps> = ({
           <PlusCircle className="mr-2 h-4 w-4" /> Add Expense
         </Button>
         <ThemeToggle />
+        <Button variant="ghost" size="icon" onClick={handleSignOut}>
+            <LogOut className="h-4 w-4" />
+        </Button>
       </div>
       <ExpenseForm
         isOpen={isFormOpen}

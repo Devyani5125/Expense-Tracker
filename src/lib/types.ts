@@ -2,12 +2,13 @@ import { z } from 'zod';
 import { UtensilsCrossed, Plane, ShoppingCart, ReceiptText, MoreHorizontal } from 'lucide-react';
 
 export const expenseSchema = z.object({
-  id: z.string().default(() => crypto.randomUUID()),
+  id: z.string().optional(),
   title: z.string().min(1, 'Title is required.'),
   amount: z.coerce.number().min(0.01, 'Amount must be greater than 0.'),
   date: z.date(),
   category: z.enum(['Food', 'Travel', 'Shopping', 'Bills', 'Others']),
   paymentMethod: z.enum(['Cash', 'Credit Card', 'Debit Card', 'Online']),
+  userId: z.string().optional(),
 });
 
 export type Expense = z.infer<typeof expenseSchema>;
