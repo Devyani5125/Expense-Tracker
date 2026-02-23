@@ -46,7 +46,12 @@ export const userProfileSchema = z.object({
     username: z.string().max(50).optional(),
     preferredCurrency: z.enum(['INR', 'USD', 'EUR']),
     darkModeEnabled: z.boolean(),
-    budgetLimit: z.coerce.number().min(0, 'Budget must be a positive number.').optional(),
   });
   
   export type ProfileSettingsData = z.infer<typeof profileSettingsSchema>;
+
+  export const budgetSettingsSchema = z.object({
+    budgetLimit: z.coerce.number().min(0, 'Budget must be a positive number.').optional(),
+  });
+  
+  export type BudgetSettingsData = z.infer<typeof budgetSettingsSchema>;

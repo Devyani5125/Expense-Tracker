@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useUserProfile } from '@/hooks/use-user-profile';
 import { ProfileSettingsData, profileSettingsSchema } from '@/lib/types';
 import { useEffect } from 'react';
@@ -37,7 +37,6 @@ export function ProfileSettingsForm() {
       username: '',
       preferredCurrency: 'INR',
       darkModeEnabled: false,
-      budgetLimit: 0,
     },
   });
 
@@ -47,7 +46,6 @@ export function ProfileSettingsForm() {
         username: userProfile.username || '',
         preferredCurrency: (userProfile.preferredCurrency as 'INR' | 'USD' | 'EUR') || 'INR',
         darkModeEnabled: userProfile.darkModeEnabled || false,
-        budgetLimit: userProfile.budgetLimit || 0,
       });
     }
   }, [userProfile, form]);
@@ -68,6 +66,7 @@ export function ProfileSettingsForm() {
     <Card>
       <CardHeader>
         <CardTitle>Profile Settings</CardTitle>
+        <CardDescription>Manage your account settings and preferences.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -103,22 +102,6 @@ export function ProfileSettingsForm() {
                       <SelectItem value="EUR">EUR (€)</SelectItem>
                     </SelectContent>
                   </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="budgetLimit"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Monthly Budget</FormLabel>
-                  <FormControl>
-                    <Input type="number" placeholder="e.g., 50000" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Set a monthly budget for your expenses (in your preferred currency).
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

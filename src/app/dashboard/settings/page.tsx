@@ -1,12 +1,14 @@
 "use client";
 
 import { ProfileSettingsForm } from '@/components/profile-settings-form';
+import { BudgetSettingsForm } from '@/components/budget-settings-form';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/firebase';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useEffect } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function SettingsPage() {
     const { user, isUserLoading } = useUser();
@@ -33,9 +35,18 @@ export default function SettingsPage() {
         <h1 className="text-xl font-semibold">Settings</h1>
       </header>
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-        <div className="mx-auto grid w-full max-w-2xl gap-2">
+        <Tabs defaultValue="profile" className="mx-auto w-full max-w-2xl">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="budget">Budget</TabsTrigger>
+          </TabsList>
+          <TabsContent value="profile">
             <ProfileSettingsForm />
-        </div>
+          </TabsContent>
+          <TabsContent value="budget">
+            <BudgetSettingsForm />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
