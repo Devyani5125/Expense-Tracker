@@ -29,13 +29,15 @@ export default function Dashboard() {
 
   const filteredExpenses = useMemo(() => {
     if (!expenses) return [];
-    return expenses.filter(expense => {
-      const expenseDate = new Date(expense.date);
-      const categoryMatch = categoryFilter === 'all' || expense.category === categoryFilter;
-      const monthMatch = expenseDate.getFullYear() === currentMonth.getFullYear() &&
-                         expenseDate.getMonth() === currentMonth.getMonth();
-      return categoryMatch && monthMatch;
-    });
+    return expenses
+      .filter(expense => {
+        const expenseDate = new Date(expense.date);
+        const categoryMatch = categoryFilter === 'all' || expense.category === categoryFilter;
+        const monthMatch = expenseDate.getFullYear() === currentMonth.getFullYear() &&
+                           expenseDate.getMonth() === currentMonth.getMonth();
+        return categoryMatch && monthMatch;
+      })
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [expenses, categoryFilter, currentMonth]);
 
   if (isUserLoading || !user) {
