@@ -18,7 +18,7 @@ export default function ExpenseChart({ expenses }: ExpenseChartProps) {
     sortedExpenses.forEach(expense => {
       const dateStr = new Date(expense.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       if (!dataByDate[dateStr]) {
-        dataByDate[dateStr] = { date: dateStr, Food: 0, Travel: 0, Shopping: 0, Bills: 0, Others: 0 };
+        dataByDate[dateStr] = { date: dateStr, Food: 0, Travel: 0, Shopping: 0, Bills: 0, Others: 0, Education: 0 };
       }
       dataByDate[dateStr][expense.category] += expense.amount;
     });
@@ -64,6 +64,7 @@ export default function ExpenseChart({ expenses }: ExpenseChartProps) {
           <Bar dataKey="Shopping" stackId="a" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]} />
           <Bar dataKey="Bills" stackId="a" fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} />
           <Bar dataKey="Others" stackId="a" fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="Education" stackId="a" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
         </BarChart>
       ) : (
         <div className="flex h-full items-center justify-center rounded-lg border border-dashed">

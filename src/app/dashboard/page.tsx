@@ -19,7 +19,7 @@ export default function Dashboard() {
   const router = useRouter();
   const { expenses, addExpense, updateExpense, deleteExpense, isLoading } = useExpenses(user?.uid);
   const [categoryFilter, setCategoryFilter] = useState<Category | 'all'>('all');
-  const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -30,11 +30,13 @@ export default function Dashboard() {
   const filteredExpenses = useMemo(() => {
     if (!expenses) return [];
     return expenses.filter(expense => {
+      const expenseDate = new Date(expense.date);
       const categoryMatch = categoryFilter === 'all' || expense.category === categoryFilter;
-      const dateMatch = !dateFilter || new Date(expense.date).toDateString() === dateFilter.toDateString();
-      return categoryMatch && dateMatch;
+      const monthMatch = expenseDate.getFullYear() === currentMonth.getFullYear() &&
+                         expenseDate.getMonth() === currentMonth.getMonth();
+      return categoryMatch && monthMatch;
     });
-  }, [expenses, categoryFilter, dateFilter]);
+  }, [expenses, categoryFilter, currentMonth]);
 
   if (isUserLoading || !user) {
     return <div>Loading...</div>;
@@ -46,15 +48,15 @@ export default function Dashboard() {
         onAddExpense={addExpense}
         categoryFilter={categoryFilter}
         setCategoryFilter={setCategoryFilter}
-        dateFilter={dateFilter}
-        setDateFilter={setDateFilter}
+        currentMonth={currentMonth}
+        setCurrentMonth={setCurrentMonth}
       />
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
         {isLoading ? (
              <div>Loading expenses...</div>
         ) : (
           <>
-            <ExpenseStats expenses={filteredExpenses} currency={userProfile?.preferredCurrency} />
+            <ExpenseStats expenses={filteredExpenses} currency={userProfile?.preferredCurrency} budgetLimit={userProfile?.budgetLimit} />
             <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
               <Card className="xl:col-span-2">
                 <CardHeader>

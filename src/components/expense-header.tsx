@@ -4,32 +4,37 @@ import React, { useState } from 'react';
 import Logo from './logo';
 import { ThemeToggle } from './theme-toggle';
 import { Button } from './ui/button';
-import { PlusCircle, X } from 'lucide-react';
+import { PlusCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ExpenseForm } from './expense-form';
 import { Expense, Category, categories } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { Calendar } from './ui/calendar';
-import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, addMonths, subMonths } from 'date-fns';
 import { UserNav } from './user-nav';
 
 interface ExpenseHeaderProps {
   onAddExpense: (expense: Omit<Expense, 'id'>) => void;
   categoryFilter: Category | 'all';
   setCategoryFilter: (category: Category | 'all') => void;
-  dateFilter: Date | undefined;
-  setDateFilter: (date: Date | undefined) => void;
+  currentMonth: Date;
+  setCurrentMonth: (date: Date) => void;
 }
 
 const ExpenseHeader: React.FC<ExpenseHeaderProps> = ({
   onAddExpense,
   categoryFilter,
   setCategoryFilter,
-  dateFilter,
-  setDateFilter,
+  currentMonth,
+  setCurrentMonth,
 }) => {
   const [isFormOpen, setIsFormOpen] = useState(false);
+
+  const handlePreviousMonth = () => {
+    setCurrentMonth(subMonths(currentMonth, 1));
+  };
+
+  const handleNextMonth = () => {
+    setCurrentMonth(addMonths(currentMonth, 1));
+  };
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur-sm md:px-6">
@@ -48,28 +53,18 @@ const ExpenseHeader: React.FC<ExpenseHeaderProps> = ({
             </SelectContent>
           </Select>
 
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant={"outline"}
-                className={cn(
-                  "w-[200px] justify-start text-left font-normal",
-                  !dateFilter && "text-muted-foreground"
-                )}
-              >
-                {dateFilter ? format(dateFilter, "PPP") : <span>Filter by date</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={dateFilter}
-                onSelect={setDateFilter}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-           {dateFilter && <Button variant="ghost" size="icon" onClick={() => setDateFilter(undefined)}><X className="h-4 w-4" /></Button>}
+          <div className="flex items-center gap-1 rounded-md border p-1">
+            <Button variant="ghost" size="icon" onClick={handlePreviousMonth}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="w-28 text-center text-sm font-medium">
+              {format(currentMonth, 'MMMM yyyy')}
+            </span>
+            <Button variant="ghost" size="icon" onClick={handleNextMonth}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+
         </div>
         <Button onClick={() => setIsFormOpen(true)}>
           <PlusCircle className="mr-2 h-4 w-4" /> Add Expense
