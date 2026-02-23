@@ -36,10 +36,14 @@ export function useExpenses(userId?: string) {
 
   const memoizedExpenses = useMemo(() => {
     if (!expenses) return null;
-    return expenses.map(e => ({
-        ...e,
-        date: new Date(e.date)
-    }));
+    return expenses.map(e => {
+        // Firestore Timestamps need to be converted to JS Date objects.
+        if (e.date && typeof (e.date as any).toDate === 'function') {
+            return { ...e, date: (e.date as any).toDate() };
+        }
+        // Fallback for other potential date formats
+        return { ...e, date: new Date(e.date) };
+    });
   }, [expenses]);
 
 
