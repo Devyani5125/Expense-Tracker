@@ -1,47 +1,51 @@
 "use client"
 
 import * as React from "react"
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts"
-import { Expense, Category } from "@/lib/types"
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
+import { Expense, Category, categories } from "@/lib/types"
 import { formatCurrency } from "@/lib/utils"
 
 interface ExpenseChartProps {
   expenses: Expense[];
+  currency?: string;
 }
 
-export default function ExpenseChart({ expenses }: ExpenseChartProps) {
+export default function ExpenseChart({ expenses, currency }: ExpenseChartProps) {
   const chartData = React.useMemo(() => {
-    const dataByDate: { [date: string]: Record<Category, number> & { date: string } } = {};
+    const categoryTotals: { [category in Category]?: number } = {};
 
-    const sortedExpenses = [...expenses].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-    sortedExpenses.forEach(expense => {
-      const dateStr = new Date(expense.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      if (!dataByDate[dateStr]) {
-        dataByDate[dateStr] = { date: dateStr, Food: 0, Travel: 0, Shopping: 0, Bills: 0, Others: 0, Education: 0 };
-      }
-      dataByDate[dateStr][expense.category] += expense.amount;
+    categories.forEach(cat => {
+      categoryTotals[cat] = 0;
     });
 
-    return Object.values(dataByDate);
+    expenses.forEach(expense => {
+      if (categoryTotals[expense.category] !== undefined) {
+        categoryTotals[expense.category]! += expense.amount;
+      }
+    });
+
+    return categories
+      .map(cat => ({
+        name: cat,
+        total: categoryTotals[cat] || 0,
+      }))
+      .filter(item => item.total > 0)
+      .sort((a, b) => b.total - a.total);
   }, [expenses]);
 
   return (
     <ResponsiveContainer width="100%" height="100%">
       {chartData.length > 0 ? (
-        <BarChart data={chartData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-          <XAxis 
-            dataKey="date" 
-            fontSize={12} 
-            tickLine={false} 
-            axisLine={false}
-          />
-          <YAxis 
-            fontSize={12}
+        <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+          <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+          <XAxis type="number" hide />
+          <YAxis
+            dataKey="name"
+            type="category"
             tickLine={false}
             axisLine={false}
-            tickFormatter={(value) => `$${Number(value).toFixed(0)}`}
+            tick={{ fontSize: 12, fill: 'hsl(var(--foreground))' }}
+            width={80}
           />
           <Tooltip
             cursor={{ fill: 'hsl(var(--muted))' }}
@@ -50,25 +54,14 @@ export default function ExpenseChart({ expenses }: ExpenseChartProps) {
                 borderColor: 'hsl(var(--border))',
                 borderRadius: 'var(--radius)',
             }}
-            formatter={(value: number) => formatCurrency(value)}
+            formatter={(value: number) => formatCurrency(value, currency)}
             labelStyle={{ fontWeight: 'bold' }}
           />
-          <Legend
-            iconSize={10}
-            wrapperStyle={{
-                paddingTop: '20px',
-            }}
-          />
-          <Bar dataKey="Food" stackId="a" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
-          <Bar dataKey="Travel" stackId="a" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
-          <Bar dataKey="Shopping" stackId="a" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]} />
-          <Bar dataKey="Bills" stackId="a" fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} />
-          <Bar dataKey="Others" stackId="a" fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]} />
-          <Bar dataKey="Education" stackId="a" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="total" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={20} />
         </BarChart>
       ) : (
         <div className="flex h-full items-center justify-center rounded-lg border border-dashed">
-          <p className="text-sm text-muted-foreground">No data for the selected period.</p>
+          <p className="text-sm text-muted-foreground">No expenses for the selected period.</p>
         </div>
       )}
     </ResponsiveContainer>

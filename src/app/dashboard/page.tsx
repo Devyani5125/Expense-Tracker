@@ -60,12 +60,12 @@ export default function Dashboard() {
             <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
               <Card className="xl:col-span-2">
                 <CardHeader>
-                    <CardTitle>Spending Patterns</CardTitle>
-                    <CardDescription>A visual summary of your expenses over time.</CardDescription>
+                    <CardTitle>Spending Breakdown</CardTitle>
+                    <CardDescription>A breakdown of your spending by category for the selected month.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="h-[300px] w-full">
-                        <ExpenseChart expenses={filteredExpenses} />
+                        <ExpenseChart expenses={filteredExpenses} currency={userProfile?.preferredCurrency} />
                     </div>
                 </CardContent>
               </Card>
