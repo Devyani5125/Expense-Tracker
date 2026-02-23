@@ -1,0 +1,261 @@
+{
+  "entities": {
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Represents a user's profile and preferences within the ExpenseWise application, linked to an external authentication system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProfile entity. This typically corresponds to the user's ID from an external authentication system."
+        },
+        "username": {
+          "type": "string",
+          "description": "The display name of the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the user.",
+          "format": "email"
+        },
+        "preferredCurrency": {
+          "type": "string",
+          "description": "The currency preferred by the user for tracking expenses (e.g., 'USD', 'EUR')."
+        },
+        "darkModeEnabled": {
+          "type": "boolean",
+          "description": "Indicates if the user has enabled the dark mode interface preference."
+        },
+        "budgetLimit": {
+          "type": "number",
+          "description": "The optional monthly budget limit set by the user for spending tracking."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user profile was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user profile was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "preferredCurrency",
+        "darkModeEnabled",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Category": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Category",
+      "type": "object",
+      "description": "Represents a classification for expenses (e.g., Food, Travel, Shopping).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Category entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The descriptive name of the expense category (e.g., 'Food', 'Bills')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief explanation or context for the category."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile this category belongs to, allowing for user-defined categories. (Relationship: UserProfile 1:N Category)"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "userId"
+      ]
+    },
+    "PaymentMethod": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PaymentMethod",
+      "type": "object",
+      "description": "Represents a method used for making an expense (e.g., Cash, Credit Card, Debit Card).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the PaymentMethod entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The descriptive name of the payment method (e.g., 'Credit Card', 'Cash')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief explanation or details for the payment method."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile this payment method belongs to, allowing for user-defined payment methods. (Relationship: UserProfile 1:N PaymentMethod)"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "userId"
+      ]
+    },
+    "Expense": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Expense",
+      "type": "object",
+      "description": "Represents a single recorded financial expenditure by a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Expense entity."
+        },
+        "title": {
+          "type": "string",
+          "description": "A short, descriptive name or summary for the expense."
+        },
+        "amount": {
+          "type": "number",
+          "description": "The monetary value of the expense."
+        },
+        "expenseDate": {
+          "type": "string",
+          "description": "The specific date when the expense occurred.",
+          "format": "date"
+        },
+        "categoryId": {
+          "type": "string",
+          "description": "Reference to the Category for this expense. (Relationship: Category 1:N Expense)"
+        },
+        "paymentMethodId": {
+          "type": "string",
+          "description": "Reference to the PaymentMethod used for this expense. (Relationship: PaymentMethod 1:N Expense)"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile who recorded this expense. (Relationship: UserProfile 1:N Expense)"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional additional details or comments about the expense."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the expense record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the expense record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "amount",
+        "expenseDate",
+        "categoryId",
+        "paymentMethodId",
+        "userId",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores the profile information and preferences for a specific user. The document ID (`{userId}`) for each UserProfile document MUST match the `id` field within the document, which in turn corresponds to the authenticated user's UID (`request.auth.uid`). This structure ensures direct ownership and simplified security rules.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier of the user, corresponding to `request.auth.uid` and the `id` field within the UserProfile document."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/categories/{categoryId}",
+        "definition": {
+          "entityName": "Category",
+          "schema": {
+            "$ref": "#/backend/entities/Category"
+          },
+          "description": "Stores user-defined expense categories. Each category document includes a `userId` field which MUST match the `{userId}` in the path. This denormalization ensures authorization independence for security rules and allows for secure list operations, enabling users to only access their own categories.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier of the user who owns this category, matching the parent UserProfile and `request.auth.uid`."
+            },
+            {
+              "name": "categoryId",
+              "description": "Unique identifier for the specific expense category."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/paymentMethods/{paymentMethodId}",
+        "definition": {
+          "entityName": "PaymentMethod",
+          "schema": {
+            "$ref": "#/backend/entities/PaymentMethod"
+          },
+          "description": "Stores user-defined payment methods. Each payment method document includes a `userId` field which MUST match the `{userId}` in the path. This denormalization ensures authorization independence for security rules and allows for secure list operations, enabling users to only access their own payment methods.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier of the user who owns this payment method, matching the parent UserProfile and `request.auth.uid`."
+            },
+            {
+              "name": "paymentMethodId",
+              "description": "Unique identifier for the specific payment method."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/expenses/{expenseId}",
+        "definition": {
+          "entityName": "Expense",
+          "schema": {
+            "$ref": "#/backend/entities/Expense"
+          },
+          "description": "Stores individual expense records for a user. Each expense document includes a `userId` field which MUST match the `{userId}` in the path. This denormalization ensures authorization independence for security rules and allows for secure list operations, enabling users to only access their own expenses.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier of the user who recorded this expense, matching the parent UserProfile and `request.auth.uid`."
+            },
+            {
+              "name": "expenseId",
+              "description": "Unique identifier for the specific expense record."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The proposed Firestore data structure prioritizes security, scalability, and debuggability by adhering to the core design principles and strategy mandates. All user-specific data is organized under a top-level `/users` collection, with each user's data residing in a subcollection identified by their unique `userId`. This pattern provides strong authorization boundaries and simplified security rules.\n\n**Authorization Independence:** Each entity (`UserProfile`, `Category`, `PaymentMethod`, `Expense`) includes a `userId` field. For `UserProfile`, its document ID is the `userId`. For `Category`, `PaymentMethod`, and `Expense`, the `userId` field within the document explicitly links it to its owner. Crucially, this `userId` field also appears as a wildcard (`{userId}`) in the document's path (e.g., `/users/{userId}/categories/{categoryId}`). This denormalization means that security rules can check ownership directly using `request.auth.uid == resource.data.userId && resource.data.userId == userId` (where `userId` is the path segment wildcard) without needing to perform expensive and non-atomic `get()` operations on parent documents. This completely eliminates hierarchical authorization dependencies.\n\n**Queryable Authorization Predicates (QAPs):** The structural segregation of data under `/users/{userId}/...` naturally enables secure `list` operations. Because all documents within, for example, `/users/{userId}/expenses` inherently belong to `{userId}`, a rule can simply `allow list: if request.auth.uid == userId;`. This ensures that a user can only list their own expenses, categories, or payment methods. There is no mixing of public and private data within these collections, maintaining a homogeneous security posture. The presence of `userId` in both the path and the document data provides a robust foundation for secure and efficient queries, as the `userId` can be used as a query filter, which is then validated against the `request.auth.uid` in the rules."
+  }
+}

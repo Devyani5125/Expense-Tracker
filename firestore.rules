@@ -1,0 +1,164 @@
+/**
+ * Core Philosophy: This ruleset enforces a strict user-ownership model. All application data
+ * is private and can only be accessed by the user who created it. There is no concept of
+ * public or shared data in this model.
+ *
+ * Data Structure: All data is hierarchically organized under a top-level `/users` collection.
+ * Each user's data, including their profile, categories, payment methods, and expenses, is
+ * stored in documents and subcollections under their unique user ID path (e.g., `/users/{userId}/...`).
+ * This structural segregation is the primary mechanism for ensuring data privacy and security.
+ *
+ * Key Security Decisions:
+ * - User Isolation: A user can only ever read or write data within their own data tree
+ *   (i.e., where the path's `{userId}` wildcard matches their authenticated UID).
+ * - No User Listing: It is not possible to query the top-level `/users` collection, preventing
+ *   any user from discovering a list of other users on the platform.
+ * - Secure Self-Provisioning: A newly authenticated user is explicitly allowed to create their
+ *   own profile document, but no one else's.
+ *
+ * Denormalization for Authorization: To ensure fast and secure authorization checks, a `userId`
+ * field is denormalized onto every document within a user's data tree (e.g., categories, expenses).
+ * Rules enforce that this internal `userId` always matches the `{userId}` from the document's path,
+ * creating a redundant but powerful security guarantee that avoids costly cross-document reads (`get()`).
+ * This also makes user-specific queries (`list` operations) inherently secure.
+ *
+ * Structural Segregation: The entire data model is based on structural segregation. By placing
+ * all user-specific content in subcollections under `/users/{userId}`, we avoid mixing private
+ * data and eliminate the need for complex filter-based security rules, which are often a
+ * source of security vulnerabilities.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ----------------------------------------------------------------------
+    // Helper Functions
+    // ----------------------------------------------------------------------
+
+    /**
+     * Checks if the user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Checks if the authenticated user's ID matches the provided userId.
+     * This is the fundamental ownership check.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * Combines an ownership check with a verification that the document
+     * already exists. Essential for secure update and delete operations.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * Validates the integrity of a new UserProfile document.
+     * Ensures the document's internal `id` matches the document's path ID (`userId`).
+     */
+    function hasValidUserProfileData(userId) {
+      return request.resource.data.id == userId;
+    }
+
+    /**
+     * Validates that the UserProfile's unique ID (`id`) is not changed on update.
+     */
+    function isUserProfileIdImmutable() {
+      return request.resource.data.id == resource.data.id;
+    }
+
+    /**
+     * Validates the integrity of a new user-owned document (e.g., Category, Expense).
+     * Ensures the document's internal `userId` matches the `userId` from the path.
+     */
+    function hasValidOwnerLink(userId) {
+      return request.resource.data.userId == userId;
+    }
+
+    /**
+     * Validates that the ownership link (`userId`) on a document is not changed on update.
+     */
+    function isOwnerLinkImmutable() {
+      return request.resource.data.userId == resource.data.userId;
+    }
+
+
+    /**
+     * @description   Rules for a user's own profile document.
+     * @path          /users/{userId}
+     * @allow         (create) An authenticated user can create their OWN profile document.
+     * @allow         (get) An authenticated user can read their own profile.
+     * @allow         (update) An authenticated user can update their own profile.
+     * @deny          (list) No user can list all other user profiles.
+     * @deny          (get) A user cannot read another user's profile.
+     * @principle     Restricts access to a user's own data tree and allows for self-creation.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && hasValidUserProfileData(userId);
+      allow update: if isExistingOwner(userId) && isUserProfileIdImmutable();
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description   Rules for user-defined expense categories.
+     * @path          /users/{userId}/categories/{categoryId}
+     * @allow         (create) A user can create a new category in their own collection.
+     * @allow         (list) A user can list all categories they have created.
+     * @allow         (delete) A user can delete one of their own categories.
+     * @deny          (create) A user cannot create a category for another user.
+     * @deny          (list) A user cannot list another user's categories.
+     * @principle     Enforces document ownership within a user-specific subcollection.
+     */
+    match /users/{userId}/categories/{categoryId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && hasValidOwnerLink(userId);
+      allow update: if isExistingOwner(userId) && isOwnerLinkImmutable();
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description   Rules for user-defined payment methods.
+     * @path          /users/{userId}/paymentMethods/{paymentMethodId}
+     * @allow         (create) A user can create a new payment method for themselves.
+     * @allow         (list) A user can list their own payment methods.
+     * @allow         (update) A user can update one of their own payment methods.
+     * @deny          (get) A user cannot read a payment method belonging to another user.
+     * @deny          (delete) A user cannot delete another user's payment method.
+     * @principle     Enforces document ownership within a user-specific subcollection.
+     */
+    match /users/{userId}/paymentMethods/{paymentMethodId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && hasValidOwnerLink(userId);
+      allow update: if isExistingOwner(userId) && isOwnerLinkImmutable();
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description   Rules for a user's individual expense records.
+     * @path          /users/{userId}/expenses/{expenseId}
+     * @allow         (create) A user can create a new expense record for themselves.
+     * @allow         (list) A user can list their own expense records.
+     * @allow         (update) A user can update one of their own expense records.
+     * @deny          (get) A user cannot read an expense record belonging to another user.
+     * @deny          (delete) A user cannot delete another user's expense record.
+     * @principle     Enforces document ownership and validates relational integrity.
+     */
+    match /users/{userId}/expenses/{expenseId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && hasValidOwnerLink(userId);
+      allow update: if isExistingOwner(userId) && isOwnerLinkImmutable();
+      allow delete: if isExistingOwner(userId);
+    }
+  }
+}
