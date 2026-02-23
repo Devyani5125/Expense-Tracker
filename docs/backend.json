@@ -21,7 +21,7 @@
         },
         "preferredCurrency": {
           "type": "string",
-          "description": "The currency preferred by the user for tracking expenses (e.g., 'USD', 'EUR')."
+          "description": "The currency preferred by the user for tracking expenses (e.g., 'INR', 'USD', 'EUR')."
         },
         "darkModeEnabled": {
           "type": "boolean",

@@ -26,3 +26,25 @@ export const categoryIcons: Record<Category, React.ElementType> = {
   Bills: ReceiptText,
   Others: MoreHorizontal,
 };
+
+// Based on docs/backend.json
+export const userProfileSchema = z.object({
+    id: z.string(),
+    username: z.string().optional(),
+    email: z.string().email().optional(),
+    preferredCurrency: z.string().default('INR'),
+    darkModeEnabled: z.boolean().default(false),
+    budgetLimit: z.number().optional(),
+    createdAt: z.any().optional(),
+    updatedAt: z.any().optional(),
+  });
+  
+  export type UserProfile = z.infer<typeof userProfileSchema>;
+  
+  export const profileSettingsSchema = z.object({
+    username: z.string().max(50).optional(),
+    preferredCurrency: z.enum(['INR', 'USD', 'EUR']),
+    darkModeEnabled: z.boolean(),
+  });
+  
+  export type ProfileSettingsData = z.infer<typeof profileSettingsSchema>;
