@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/firebase';
 import {
   initiateEmailSignUp,
@@ -24,13 +24,14 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  if (isUserLoading) {
-    return <div>Loading...</div>;
-  }
+  useEffect(() => {
+    if (!isUserLoading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, isUserLoading, router]);
 
-  if (user) {
-    router.push('/dashboard');
-    return null;
+  if (isUserLoading || user) {
+    return <div>Loading...</div>;
   }
 
   const handleSignUp = (e: React.FormEvent) => {
