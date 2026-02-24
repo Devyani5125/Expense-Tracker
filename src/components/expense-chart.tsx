@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts"
 import { Expense, Category, categories } from "@/lib/types"
 import { formatCurrency } from "@/lib/utils"
 
@@ -9,6 +9,50 @@ interface ExpenseChartProps {
   expenses: Expense[];
   currency?: string;
 }
+
+const COLORS = [
+  "hsl(var(--chart-1))",
+  "hsl(var(--chart-2))",
+  "hsl(var(--chart-3))",
+  "hsl(var(--chart-4))",
+  "hsl(var(--chart-5))",
+  "hsl(var(--accent))",
+];
+
+const RADIAN = Math.PI / 180;
+const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+  if (percent === 0) {
+    return null;
+  }
+
+  return (
+    <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" className="text-xs font-bold">
+      {`${(percent * 100).toFixed(0)}%`}
+    </text>
+  );
+};
+
+const CustomTooltip = ({ active, payload, currency }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0];
+      return (
+        <div className="rounded-lg border bg-background p-2 shadow-sm">
+            <div className="flex items-center gap-2">
+                <div style={{width: 10, height: 10, backgroundColor: data.payload.fill, borderRadius: '50%'}}></div>
+                <p className="text-sm font-bold">{data.name}</p>
+            </div>
+          <p className="text-sm text-muted-foreground pl-4">
+            {formatCurrency(data.value, currency)}
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
 
 export default function ExpenseChart({ expenses, currency }: ExpenseChartProps) {
   const chartData = React.useMemo(() => {
@@ -27,38 +71,41 @@ export default function ExpenseChart({ expenses, currency }: ExpenseChartProps) 
     return categories
       .map(cat => ({
         name: cat,
-        total: categoryTotals[cat] || 0,
+        value: categoryTotals[cat] || 0,
       }))
-      .filter(item => item.total > 0)
-      .sort((a, b) => b.total - a.total);
+      .filter(item => item.value > 0)
+      .sort((a, b) => b.value - a.value);
   }, [expenses]);
+
 
   return (
     <ResponsiveContainer width="100%" height="100%">
       {chartData.length > 0 ? (
-        <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-          <XAxis type="number" hide />
-          <YAxis
-            dataKey="name"
-            type="category"
-            tickLine={false}
-            axisLine={false}
-            tick={{ fontSize: 12, fill: 'hsl(var(--foreground))' }}
-            width={80}
-          />
-          <Tooltip
-            cursor={{ fill: 'hsl(var(--muted))' }}
-            contentStyle={{
-                backgroundColor: 'hsl(var(--background))',
-                borderColor: 'hsl(var(--border))',
-                borderRadius: 'var(--radius)',
+        <PieChart>
+          <Tooltip content={<CustomTooltip currency={currency} />} />
+          <Pie
+            data={chartData}
+            cx="50%"
+            cy="50%"
+            labelLine={false}
+            label={renderCustomizedLabel}
+            outerRadius={100}
+            innerRadius={60}
+            paddingAngle={5}
+            dataKey="value"
+            nameKey="name"
+          >
+            {chartData.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke={COLORS[index % COLORS.length]} />
+            ))}
+          </Pie>
+          <Legend 
+            iconSize={10} 
+            wrapperStyle={{
+                fontSize: '0.8rem',
             }}
-            formatter={(value: number) => formatCurrency(value, currency)}
-            labelStyle={{ fontWeight: 'bold' }}
           />
-          <Bar dataKey="total" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={20} />
-        </BarChart>
+        </PieChart>
       ) : (
         <div className="flex h-full items-center justify-center rounded-lg border border-dashed">
           <p className="text-sm text-muted-foreground">No expenses for the selected period.</p>
