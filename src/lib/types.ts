@@ -61,9 +61,9 @@ export const userProfileSchema = z.object({
 
 export const avatarPresets = [
   "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix",
-  "https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka",
-  "https://api.dicebear.com/7.x/avataaars/svg?seed=Milo",
-  "https://api.dicebear.com/7.x/avataaars/svg?seed=Sophie",
-  "https://api.dicebear.com/7.x/avataaars/svg?seed=Toby",
-  "https://api.dicebear.com/7.x/avataaars/svg?seed=Lily",
+  "https://api.dicebear.com/7.x/bottts/svg?seed=Zane",
+  "https://api.dicebear.com/7.x/pixel-art/svg?seed=Milo",
+  "https://api.dicebear.com/7.x/adventurer/svg?seed=Sophie",
+  "https://api.dicebear.com/7.x/big-smile/svg?seed=Toby",
+  "https://api.dicebear.com/7.x/miniavs/svg?seed=Lily",
 ];
