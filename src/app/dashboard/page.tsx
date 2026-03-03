@@ -17,6 +17,9 @@ import { FinancialQuote } from '@/components/financial-quote';
 import { BudgetAlert } from '@/components/budget-alert';
 import { DailyReminder } from '@/components/daily-reminder';
 import { triggerCelebration } from '@/lib/celebration';
+import { AchievementBadges } from '@/components/achievement-badges';
+import { WhatIfSimulator } from '@/components/what-if-simulator';
+import { subMonths } from 'date-fns';
 
 export default function Dashboard() {
   const { user, isUserLoading } = useUser();
@@ -50,10 +53,20 @@ export default function Dashboard() {
     return filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
   }, [filteredExpenses]);
 
+  const lastMonthTotalSpent = useMemo(() => {
+    if (!expenses) return 0;
+    const lastMonth = subMonths(currentMonth, 1);
+    return expenses
+      .filter(expense => {
+        const d = new Date(expense.date);
+        return d.getFullYear() === lastMonth.getFullYear() && d.getMonth() === lastMonth.getMonth();
+      })
+      .reduce((sum, e) => sum + e.amount, 0);
+  }, [expenses, currentMonth]);
+
   const handleAddExpense = (data: Omit<Expense, 'id'>) => {
     addExpense(data);
     
-    // Check if over budget after adding
     if (userProfile?.budgetLimit && (totalSpent + data.amount) > userProfile.budgetLimit) {
       toast({
         title: "Budget Warning!",
@@ -65,8 +78,6 @@ export default function Dashboard() {
         title: "Expense added",
         description: "Your new expense has been recorded successfully.",
       });
-      // Celebration if it's a significant saving or just a healthy log?
-      // For now, let's celebrate if they log their first expense of the day and are under budget
       const hasExpenseToday = filteredExpenses.some(e => new Date(e.date).toDateString() === new Date().toDateString());
       if (!hasExpenseToday && (!userProfile?.budgetLimit || totalSpent + data.amount < userProfile.budgetLimit)) {
         triggerCelebration();
@@ -112,14 +123,30 @@ export default function Dashboard() {
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">
             <FinancialQuote />
-            <div className="space-y-4">
-              <BudgetAlert 
-                total={totalSpent} 
-                limit={userProfile?.budgetLimit || 0} 
-                currency={userProfile?.preferredCurrency} 
-              />
-              <DailyReminder expenses={expenses || []} />
+            <div className="grid gap-4 md:grid-cols-2">
+               <div className="space-y-4">
+                  <BudgetAlert 
+                    total={totalSpent} 
+                    limit={userProfile?.budgetLimit || 0} 
+                    currency={userProfile?.preferredCurrency} 
+                  />
+                  <DailyReminder expenses={expenses || []} />
+                  <AchievementBadges 
+                    currentTotal={totalSpent} 
+                    prevTotal={lastMonthTotalSpent} 
+                    limit={userProfile?.budgetLimit || 0} 
+                  />
+               </div>
+               <div className="hidden md:block">
+                 <WhatIfSimulator 
+                    expenses={filteredExpenses} 
+                    currentTotal={totalSpent} 
+                    budgetLimit={userProfile?.budgetLimit || 0} 
+                    currency={userProfile?.preferredCurrency}
+                  />
+               </div>
             </div>
+            
             {isLoading ? (
                <div className="flex h-40 items-center justify-center text-muted-foreground animate-pulse">Loading expenses...</div>
             ) : (
@@ -128,8 +155,8 @@ export default function Dashboard() {
               </div>
             )}
           </div>
-          <div className="lg:col-span-1">
-             <Card className="shadow-lg h-full border-none bg-primary/5">
+          <div className="lg:col-span-1 space-y-6">
+             <Card className="shadow-lg border-none bg-primary/5">
                 <CardHeader>
                   <CardTitle className="text-sm">Monthly Summary</CardTitle>
                   <CardDescription>Your financial footprint for {currentMonth.toLocaleDateString(undefined, { month: 'long' })}.</CardDescription>
@@ -143,8 +170,22 @@ export default function Dashboard() {
                     <span className="text-muted-foreground">Daily Avg</span>
                     <span className="font-bold">{((totalSpent / 30) || 0).toFixed(2)} {userProfile?.preferredCurrency}</span>
                   </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-muted-foreground">Vs. Last Month</span>
+                    <span className={`font-bold ${totalSpent <= lastMonthTotalSpent ? 'text-green-600' : 'text-destructive'}`}>
+                      {totalSpent <= lastMonthTotalSpent ? '-' : '+'}{Math.abs(totalSpent - lastMonthTotalSpent).toFixed(2)} {userProfile?.preferredCurrency}
+                    </span>
+                  </div>
                 </CardContent>
              </Card>
+             <div className="md:hidden">
+                <WhatIfSimulator 
+                  expenses={filteredExpenses} 
+                  currentTotal={totalSpent} 
+                  budgetLimit={userProfile?.budgetLimit || 0} 
+                  currency={userProfile?.preferredCurrency}
+                />
+             </div>
           </div>
         </div>
 
