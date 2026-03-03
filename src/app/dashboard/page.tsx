@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -19,6 +18,7 @@ import { DailyReminder } from '@/components/daily-reminder';
 import { triggerCelebration } from '@/lib/celebration';
 import { AchievementBadges } from '@/components/achievement-badges';
 import { WhatIfSimulator } from '@/components/what-if-simulator';
+import { FinancialQA } from '@/components/financial-qa';
 import { subMonths } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -187,6 +187,12 @@ export default function Dashboard() {
           {/* Sidebar Area */}
           <aside className="lg:col-span-4 space-y-8">
              <div className="animate-in fade-in slide-in-from-right-4 duration-700 delay-150 space-y-6">
+                <FinancialQA 
+                  expenses={filteredExpenses} 
+                  currency={userProfile?.preferredCurrency} 
+                  budgetLimit={userProfile?.budgetLimit} 
+                />
+
                 <Card className="shadow-md border-none bg-primary/5 hover:bg-primary/10 transition-colors duration-300">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Monthly Pulse</CardTitle>
