@@ -14,6 +14,9 @@ import { useRouter } from 'next/navigation';
 import { useUserProfile } from '@/hooks/use-user-profile';
 import { useToast } from '@/hooks/use-toast';
 import { FinancialQuote } from '@/components/financial-quote';
+import { BudgetAlert } from '@/components/budget-alert';
+import { DailyReminder } from '@/components/daily-reminder';
+import { triggerCelebration } from '@/lib/celebration';
 
 export default function Dashboard() {
   const { user, isUserLoading } = useUser();
@@ -43,12 +46,32 @@ export default function Dashboard() {
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [expenses, categoryFilter, currentMonth]);
 
+  const totalSpent = useMemo(() => {
+    return filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
+  }, [filteredExpenses]);
+
   const handleAddExpense = (data: Omit<Expense, 'id'>) => {
     addExpense(data);
-    toast({
-      title: "Expense added",
-      description: "Your new expense has been recorded successfully.",
-    });
+    
+    // Check if over budget after adding
+    if (userProfile?.budgetLimit && (totalSpent + data.amount) > userProfile.budgetLimit) {
+      toast({
+        title: "Budget Warning!",
+        description: "This expense puts you over your monthly budget limit.",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Expense added",
+        description: "Your new expense has been recorded successfully.",
+      });
+      // Celebration if it's a significant saving or just a healthy log?
+      // For now, let's celebrate if they log their first expense of the day and are under budget
+      const hasExpenseToday = filteredExpenses.some(e => new Date(e.date).toDateString() === new Date().toDateString());
+      if (!hasExpenseToday && (!userProfile?.budgetLimit || totalSpent + data.amount < userProfile.budgetLimit)) {
+        triggerCelebration();
+      }
+    }
   };
 
   const handleUpdateExpense = (data: Expense) => {
@@ -89,6 +112,14 @@ export default function Dashboard() {
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">
             <FinancialQuote />
+            <div className="space-y-4">
+              <BudgetAlert 
+                total={totalSpent} 
+                limit={userProfile?.budgetLimit || 0} 
+                currency={userProfile?.preferredCurrency} 
+              />
+              <DailyReminder expenses={expenses || []} />
+            </div>
             {isLoading ? (
                <div className="flex h-40 items-center justify-center text-muted-foreground animate-pulse">Loading expenses...</div>
             ) : (
@@ -98,7 +129,22 @@ export default function Dashboard() {
             )}
           </div>
           <div className="lg:col-span-1">
-             {/* This space can be used for extra dashboard widgets in the future */}
+             <Card className="shadow-lg h-full border-none bg-primary/5">
+                <CardHeader>
+                  <CardTitle className="text-sm">Monthly Summary</CardTitle>
+                  <CardDescription>Your financial footprint for {currentMonth.toLocaleDateString(undefined, { month: 'long' })}.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-muted-foreground">Transactions</span>
+                    <span className="font-bold">{filteredExpenses.length}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-muted-foreground">Daily Avg</span>
+                    <span className="font-bold">{((totalSpent / 30) || 0).toFixed(2)} {userProfile?.preferredCurrency}</span>
+                  </div>
+                </CardContent>
+             </Card>
           </div>
         </div>
 
