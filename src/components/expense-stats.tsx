@@ -5,7 +5,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Expense, Category, categoryIcons } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
-import { Target, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Target, TrendingUp, AlertTriangle, ArrowUpRight } from 'lucide-react';
 import { Progress } from './ui/progress';
 import { cn } from '@/lib/utils';
 
@@ -31,76 +31,84 @@ const ExpenseStats: React.FC<ExpenseStatsProps> = ({ expenses, currency, budgetL
   const isNearBudget = budgetProgress > 80 && budgetProgress <= 100;
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <Card className="relative overflow-hidden group hover:shadow-xl transition-all duration-300 border-l-4 border-l-primary bg-gradient-to-br from-card to-primary/5">
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      {/* Total Spending Card */}
+      <Card className="relative overflow-hidden group hover:shadow-2xl transition-all duration-500 border-none bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground">
+        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-150 group-hover:rotate-12 transition-transform duration-500">
+           <TrendingUp className="h-24 w-24" />
+        </div>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Spending</CardTitle>
-          <TrendingUp className="h-4 w-4 text-primary group-hover:scale-125 transition-transform" />
+          <CardTitle className="text-xs font-bold uppercase tracking-widest opacity-80">Total Spending</CardTitle>
+          <ArrowUpRight className="h-4 w-4 opacity-70 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-extrabold tracking-tight">{formatCurrency(totalExpenses, currency)}</div>
+          <div className="text-3xl font-black tracking-tight mb-1">{formatCurrency(totalExpenses, currency)}</div>
+          <p className="text-[10px] opacity-70 font-medium uppercase">Current Month Activity</p>
         </CardContent>
       </Card>
 
-      {budgetLimit && budgetLimit > 0 && (
-          <Card className={cn(
-            "lg:col-span-1 group hover:shadow-xl transition-all duration-300 border-l-4 bg-gradient-to-br from-card",
-            isOverBudget ? "border-l-destructive to-destructive/5" : isNearBudget ? "border-l-orange-500 to-orange-500/5" : "border-l-accent to-accent/5"
-          )}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Monthly Budget</CardTitle>
-                {isOverBudget ? (
-                  <AlertTriangle className="h-4 w-4 text-destructive animate-bounce" />
-                ) : (
-                  <Target className="h-4 w-4 text-accent group-hover:rotate-12 transition-transform" />
-                )}
-            </CardHeader>
-            <CardContent>
-                <div className="text-lg font-bold flex items-baseline gap-1">
-                  <span>{formatCurrency(totalExpenses, currency)}</span>
-                  <span className="text-xs text-muted-foreground font-normal">/ {formatCurrency(budgetLimit, currency)}</span>
-                </div>
-                <div className="mt-3 space-y-1">
-                  <Progress 
-                    value={Math.min(budgetProgress, 100)} 
-                    className={cn(
-                      "h-2.5",
-                      isOverBudget && "[&>div]:bg-destructive",
-                      isNearBudget && "[&>div]:bg-orange-500"
-                    )} 
-                  />
-                  <div className="flex justify-between items-center text-[10px] font-bold">
-                    <span className={cn(
-                      isOverBudget ? "text-destructive" : isNearBudget ? "text-orange-600" : "text-muted-foreground"
-                    )}>
-                      {isOverBudget ? 'Over Budget!' : isNearBudget ? 'Near Limit' : 'On Track'}
-                    </span>
-                    <span className={isOverBudget ? 'text-destructive' : 'text-muted-foreground'}>
-                      {budgetProgress.toFixed(0)}%
-                    </span>
-                  </div>
-                </div>
-            </CardContent>
-          </Card>
-      )}
-
-      {Object.entries(categoryIcons).map(([category, Icon]) => {
-        const total = categoryTotals[category as Category] || 0;
-        if (total === 0) return null;
-        return (
-          <Card key={category} className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-card/50 backdrop-blur-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{category}</CardTitle>
-              <div className="p-2 rounded-full bg-muted group-hover:bg-primary/10 transition-colors">
-                <Icon className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+      {/* Monthly Budget Card */}
+      <Card className={cn(
+        "relative overflow-hidden group hover:shadow-2xl transition-all duration-500 border-none bg-gradient-to-br",
+        isOverBudget ? "from-destructive via-destructive/90 to-destructive/80 text-destructive-foreground" : 
+        isNearBudget ? "from-orange-500 via-orange-500/90 to-orange-500/80 text-white" : 
+        "from-accent via-accent/90 to-accent/80 text-accent-foreground"
+      )}>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-xs font-bold uppercase tracking-widest opacity-80">Monthly Budget</CardTitle>
+            {isOverBudget ? (
+              <AlertTriangle className="h-4 w-4 animate-pulse" />
+            ) : (
+              <Target className="h-4 w-4 group-hover:rotate-45 transition-transform duration-500" />
+            )}
+        </CardHeader>
+        <CardContent>
+            <div className="text-2xl font-black tracking-tight">
+              {formatCurrency(totalExpenses, currency)}
+              <span className="text-xs opacity-70 ml-1 font-normal">/ {formatCurrency(budgetLimit || 0, currency)}</span>
+            </div>
+            <div className="mt-4 space-y-2">
+              <Progress 
+                value={Math.min(budgetProgress, 100)} 
+                className={cn(
+                  "h-2 bg-white/20",
+                  "[&>div]:bg-white"
+                )} 
+              />
+              <div className="flex justify-between items-center text-[10px] font-black uppercase">
+                <span>{isOverBudget ? 'Limit Exceeded' : isNearBudget ? 'Critical Level' : 'Healthy Status'}</span>
+                <span>{budgetProgress.toFixed(0)}%</span>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold tracking-tight">{formatCurrency(total, currency)}</div>
-            </CardContent>
-          </Card>
-        );
-      })}
+            </div>
+        </CardContent>
+      </Card>
+
+      {/* Category Mini Cards - Only top 2 displayed here to avoid clutter, or all if small count */}
+      {Object.entries(categoryTotals)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 2)
+        .map(([category, total]) => {
+          const Icon = categoryIcons[category as Category];
+          return (
+            <Card key={category} className="group hover:shadow-xl transition-all duration-300 border-none bg-card/50 backdrop-blur-sm hover:-translate-y-1">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{category}</CardTitle>
+                <div className="p-2 rounded-xl bg-primary/5 group-hover:bg-primary/20 transition-colors">
+                  <Icon className="h-4 w-4 text-primary" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-black tracking-tight text-foreground">{formatCurrency(total, currency)}</div>
+                <div className="mt-1 h-1 w-full bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-primary transition-all duration-1000" 
+                      style={{ width: `${(total / totalExpenses * 100) || 0}%` }}
+                    />
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
     </div>
   );
 };
