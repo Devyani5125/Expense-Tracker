@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 import { UtensilsCrossed, Plane, ShoppingCart, ReceiptText, MoreHorizontal, BookOpen } from 'lucide-react';
 
@@ -33,6 +34,7 @@ export const userProfileSchema = z.object({
     id: z.string(),
     username: z.string().optional(),
     email: z.string().email().optional(),
+    photoURL: z.string().optional(),
     preferredCurrency: z.string().default('INR'),
     darkModeEnabled: z.boolean().default(false),
     budgetLimit: z.number().optional(),
@@ -46,6 +48,7 @@ export const userProfileSchema = z.object({
     username: z.string().max(50).optional(),
     preferredCurrency: z.enum(['INR', 'USD', 'EUR']),
     darkModeEnabled: z.boolean(),
+    photoURL: z.string().optional(),
   });
   
   export type ProfileSettingsData = z.infer<typeof profileSettingsSchema>;
@@ -55,3 +58,12 @@ export const userProfileSchema = z.object({
   });
   
   export type BudgetSettingsData = z.infer<typeof budgetSettingsSchema>;
+
+export const avatarPresets = [
+  "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix",
+  "https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka",
+  "https://api.dicebear.com/7.x/avataaars/svg?seed=Milo",
+  "https://api.dicebear.com/7.x/avataaars/svg?seed=Sophie",
+  "https://api.dicebear.com/7.x/avataaars/svg?seed=Toby",
+  "https://api.dicebear.com/7.x/avataaars/svg?seed=Lily",
+];

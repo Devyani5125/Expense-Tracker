@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -16,9 +17,11 @@ import { LogOut, Settings, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
+import { useUserProfile } from '@/hooks/use-user-profile';
 
 export function UserNav() {
   const { user } = useUser();
+  const { userProfile } = useUserProfile();
   const auth = useAuth();
   const { toast } = useToast();
 
@@ -49,28 +52,32 @@ export function UserNav() {
     return null;
   }
 
-  const initials = user.displayName
-    ? user.displayName
+  const displayName = userProfile?.username || user.displayName || user.email?.split('@')[0];
+  const photoURL = userProfile?.photoURL || user.photoURL || '';
+
+  const initials = displayName
+    ? displayName
         .split(' ')
         .map((n) => n[0])
         .join('')
+        .toUpperCase()
     : user.email?.[0].toUpperCase();
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-          <Avatar className="h-9 w-9">
-            <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'User'} />
-            <AvatarFallback>{initials}</AvatarFallback>
+        <Button variant="ghost" className="relative h-9 w-9 rounded-full ring-primary/20 hover:ring-4 transition-all active:scale-95">
+          <Avatar className="h-9 w-9 border-2 border-primary/20">
+            <AvatarImage src={photoURL} alt={displayName} />
+            <AvatarFallback className="bg-primary text-primary-foreground font-bold">{initials}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.displayName || user.email?.split('@')[0]}</p>
-            <p className="text-xs leading-none text-muted-foreground">
+            <p className="text-sm font-bold leading-none">{displayName}</p>
+            <p className="text-xs leading-none text-muted-foreground truncate">
               {user.email}
             </p>
           </div>
@@ -78,19 +85,19 @@ export function UserNav() {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <Link href="/dashboard/settings">
-            <DropdownMenuItem>
-              <Settings className="mr-2" />
+            <DropdownMenuItem className="cursor-pointer">
+              <Settings className="mr-2 h-4 w-4" />
               <span>Profile Settings</span>
             </DropdownMenuItem>
           </Link>
-          <DropdownMenuItem onClick={handlePasswordReset}>
-            <ShieldCheck className="mr-2" />
+          <DropdownMenuItem onClick={handlePasswordReset} className="cursor-pointer">
+            <ShieldCheck className="mr-2 h-4 w-4" />
             <span>Change Password</span>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleSignOut}>
-          <LogOut className="mr-2" />
+        <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive focus:text-destructive">
+          <LogOut className="mr-2 h-4 w-4" />
           <span>Log out</span>
         </DropdownMenuItem>
       </DropdownMenuContent>

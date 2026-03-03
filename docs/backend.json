@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "UserProfile": {
@@ -18,6 +19,10 @@
           "type": "string",
           "description": "The email address of the user.",
           "format": "email"
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "The URL of the user's profile picture or avatar."
         },
         "preferredCurrency": {
           "type": "string",
