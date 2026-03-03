@@ -1,15 +1,17 @@
+
 "use client";
 
 import React, { useState } from 'react';
 import Logo from './logo';
 import { ThemeToggle } from './theme-toggle';
 import { Button } from './ui/button';
-import { PlusCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { PlusCircle, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
 import { ExpenseForm } from './expense-form';
 import { Expense, Category, categories } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { format, addMonths, subMonths } from 'date-fns';
 import { UserNav } from './user-nav';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 interface ExpenseHeaderProps {
   onAddExpense: (expense: Omit<Expense, 'id'>) => void;
@@ -37,47 +39,71 @@ const ExpenseHeader: React.FC<ExpenseHeaderProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur-sm md:px-6">
-      <Logo />
-      <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
-        <div className="ml-auto flex items-center gap-2">
-          <Select value={categoryFilter} onValueChange={(value: Category | 'all') => setCategoryFilter(value)}>
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Filter by category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              {categories.map(cat => (
-                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+    <TooltipProvider>
+      <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur-sm md:px-6">
+        <Logo />
+        <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
+          <div className="ml-auto flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-2 text-muted-foreground mr-2">
+              <Filter className="h-4 w-4" />
+              <span className="text-xs font-medium uppercase tracking-wider">Filter</span>
+            </div>
+            <Select value={categoryFilter} onValueChange={(value: Category | 'all') => setCategoryFilter(value)}>
+              <SelectTrigger className="w-[150px] transition-all hover:border-primary">
+                <SelectValue placeholder="All Categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories.map(cat => (
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <div className="flex items-center gap-1 rounded-md border p-1">
-            <Button variant="ghost" size="icon" onClick={handlePreviousMonth}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <span className="w-28 text-center text-sm font-medium">
-              {format(currentMonth, 'MMMM yyyy')}
-            </span>
-            <Button variant="ghost" size="icon" onClick={handleNextMonth}>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-1 rounded-md border p-1 bg-muted/50">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" onClick={handlePreviousMonth} className="h-8 w-8">
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Previous Month</TooltipContent>
+              </Tooltip>
+              
+              <span className="w-28 text-center text-sm font-semibold">
+                {format(currentMonth, 'MMM yyyy')}
+              </span>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" onClick={handleNextMonth} className="h-8 w-8">
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Next Month</TooltipContent>
+              </Tooltip>
+            </div>
           </div>
 
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button onClick={() => setIsFormOpen(true)} className="shadow-md hover:shadow-lg transition-all active:scale-95">
+                <PlusCircle className="mr-2 h-4 w-4" /> <span className="hidden sm:inline">Add Expense</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Log a new transaction</TooltipContent>
+          </Tooltip>
+
+          <ThemeToggle />
+          <UserNav />
         </div>
-        <Button onClick={() => setIsFormOpen(true)}>
-          <PlusCircle className="mr-2 h-4 w-4" /> Add Expense
-        </Button>
-        <ThemeToggle />
-        <UserNav />
-      </div>
-      <ExpenseForm
-        isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        onSubmit={onAddExpense}
-      />
-    </header>
+        <ExpenseForm
+          isOpen={isFormOpen}
+          onClose={() => setIsFormOpen(false)}
+          onSubmit={onAddExpense}
+        />
+      </header>
+    </TooltipProvider>
   );
 };
 

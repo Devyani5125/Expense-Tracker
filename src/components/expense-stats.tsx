@@ -1,10 +1,11 @@
+
 "use client";
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Expense, Category, categoryIcons } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
-import { DollarSign, Target } from 'lucide-react';
+import { DollarSign, Target, TrendingUp } from 'lucide-react';
 import { Progress } from './ui/progress';
 
 interface ExpenseStatsProps {
@@ -25,42 +26,54 @@ const ExpenseStats: React.FC<ExpenseStatsProps> = ({ expenses, currency, budgetL
   }, {} as Record<Category, number>);
 
   const budgetProgress = budgetLimit && budgetLimit > 0 ? (totalExpenses / budgetLimit) * 100 : 0;
+  const isOverBudget = budgetProgress > 100;
 
   return (
     <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
-      <Card>
+      <Card className="relative overflow-hidden group hover:shadow-xl transition-all duration-300 border-l-4 border-l-primary bg-gradient-to-br from-card to-primary/5">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
-          <DollarSign className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Monthly</CardTitle>
+          <TrendingUp className="h-4 w-4 text-primary group-hover:scale-125 transition-transform" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{formatCurrency(totalExpenses, currency)}</div>
+          <div className="text-3xl font-extrabold tracking-tight">{formatCurrency(totalExpenses, currency)}</div>
         </CardContent>
       </Card>
+
       {budgetLimit && budgetLimit > 0 && (
-          <Card className="lg:col-span-1">
+          <Card className="lg:col-span-1 group hover:shadow-xl transition-all duration-300 border-l-4 border-l-accent bg-gradient-to-br from-card to-accent/5">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Monthly Budget</CardTitle>
-                <Target className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Budget Tracker</CardTitle>
+                <Target className="h-4 w-4 text-accent group-hover:rotate-12 transition-transform" />
             </CardHeader>
             <CardContent>
-                <div className="text-lg font-bold">{formatCurrency(totalExpenses, currency)}
-                <span className="text-xs text-muted-foreground"> / {formatCurrency(budgetLimit, currency)}</span>
+                <div className="text-lg font-bold flex items-baseline gap-1">
+                  <span>{formatCurrency(totalExpenses, currency)}</span>
+                  <span className="text-xs text-muted-foreground font-normal">of {formatCurrency(budgetLimit, currency)}</span>
                 </div>
-                <Progress value={budgetProgress} className="mt-2 h-2" />
+                <div className="mt-3 space-y-1">
+                  <Progress value={Math.min(budgetProgress, 100)} className={`h-2 ${isOverBudget ? 'bg-destructive/20' : ''}`} />
+                  <p className={`text-[10px] font-bold text-right ${isOverBudget ? 'text-destructive' : 'text-muted-foreground'}`}>
+                    {budgetProgress.toFixed(0)}% Utilized
+                  </p>
+                </div>
             </CardContent>
           </Card>
       )}
+
       {Object.entries(categoryIcons).map(([category, Icon]) => {
         const total = categoryTotals[category as Category] || 0;
+        if (total === 0) return null;
         return (
-          <Card key={category}>
+          <Card key={category} className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{category}</CardTitle>
-              <Icon className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{category}</CardTitle>
+              <div className="p-2 rounded-full bg-muted group-hover:bg-primary/10 transition-colors">
+                <Icon className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(total, currency)}</div>
+              <div className="text-2xl font-bold tracking-tight">{formatCurrency(total, currency)}</div>
             </CardContent>
           </Card>
         );
