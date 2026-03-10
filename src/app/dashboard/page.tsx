@@ -20,7 +20,8 @@ import { AchievementBadges } from '@/components/achievement-badges';
 import { WhatIfSimulator } from '@/components/what-if-simulator';
 import { FinancialQA } from '@/components/financial-qa';
 import { subMonths } from 'date-fns';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { LayoutDashboard, MessageSquareText, Lightbulb, Wallet } from 'lucide-react';
 
 export default function Dashboard() {
   const { user, isUserLoading } = useUser();
@@ -67,8 +68,6 @@ export default function Dashboard() {
 
   const handleAddExpense = (data: Omit<Expense, 'id'>) => {
     addExpense(data);
-    
-    // Trigger celebration on every new expense added as requested
     triggerCelebration();
 
     if (userProfile?.budgetLimit && (totalSpent + data.amount) > userProfile.budgetLimit) {
@@ -123,113 +122,135 @@ export default function Dashboard() {
         currentMonth={currentMonth}
         setCurrentMonth={setCurrentMonth}
       />
+      
       <main className="flex flex-1 flex-col gap-8 p-4 md:p-8 max-w-7xl mx-auto w-full">
-        {/* Top Stats Section */}
-        <section className="animate-in fade-in slide-in-from-top-4 duration-700">
-           <ExpenseStats 
-            expenses={filteredExpenses} 
-            currency={userProfile?.preferredCurrency} 
-            budgetLimit={userProfile?.budgetLimit} 
-           />
-        </section>
+        <Tabs defaultValue="spending" className="w-full space-y-8">
+          <div className="flex items-center justify-between flex-col md:flex-row gap-4">
+            <TabsList className="grid grid-cols-3 w-full md:w-[400px] h-12 bg-muted/50 p-1 border">
+              <TabsTrigger value="spending" className="flex items-center gap-2 data-[state=active]:bg-background">
+                <Wallet className="h-4 w-4" />
+                <span className="hidden sm:inline">Spending</span>
+              </TabsTrigger>
+              <TabsTrigger value="advisor" className="flex items-center gap-2 data-[state=active]:bg-background">
+                <MessageSquareText className="h-4 w-4" />
+                <span className="hidden sm:inline">AI Advisor</span>
+              </TabsTrigger>
+              <TabsTrigger value="insights" className="flex items-center gap-2 data-[state=active]:bg-background">
+                <Lightbulb className="h-4 w-4" />
+                <span className="hidden sm:inline">Planning</span>
+              </TabsTrigger>
+            </TabsList>
+            
+            <div className="hidden md:block">
+               <DailyReminder expenses={expenses || []} />
+            </div>
+          </div>
 
-        <div className="grid gap-8 lg:grid-cols-12">
-          {/* Main Content Area */}
-          <div className="lg:col-span-8 space-y-8">
-            {/* Actionable Alerts & Insights */}
-            <div className="space-y-4 animate-in fade-in slide-in-from-left-4 duration-700 delay-100">
-              <FinancialQuote />
-              <div className="grid gap-4 sm:grid-cols-2">
+          <TabsContent value="spending" className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <section>
+              <ExpenseStats 
+                expenses={filteredExpenses} 
+                currency={userProfile?.preferredCurrency} 
+                budgetLimit={userProfile?.budgetLimit} 
+              />
+            </section>
+
+            <div className="grid gap-8 lg:grid-cols-12">
+              <div className="lg:col-span-12 space-y-8">
                 <BudgetAlert 
                   total={totalSpent} 
                   limit={userProfile?.budgetLimit || 0} 
                   currency={userProfile?.preferredCurrency} 
                 />
-                <DailyReminder expenses={expenses || []} />
-              </div>
-            </div>
 
-            {/* Visual Analytics */}
-            <Card className="shadow-lg border-none bg-card/50 backdrop-blur-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
-              <CardHeader className="flex flex-row items-center justify-between">
-                  <div className="space-y-1">
-                    <CardTitle className="text-xl">Spending Breakdown</CardTitle>
-                    <CardDescription>Distribution of expenses by category.</CardDescription>
-                  </div>
-              </CardHeader>
-              <CardContent>
-                  <div className="h-[400px] w-full py-4">
-                      <ExpenseChart expenses={filteredExpenses} currency={userProfile?.preferredCurrency} />
-                  </div>
-              </CardContent>
-            </Card>
+                <div className="grid gap-8 md:grid-cols-2">
+                  <Card className="shadow-lg border-none bg-card/50 backdrop-blur-sm overflow-hidden h-fit">
+                    <CardHeader>
+                      <CardTitle className="text-xl">Spending Breakdown</CardTitle>
+                      <CardDescription>Visual category distribution for {format(currentMonth, 'MMMM yyyy')}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="h-[350px] w-full py-4">
+                        <ExpenseChart expenses={filteredExpenses} currency={userProfile?.preferredCurrency} />
+                      </div>
+                    </CardContent>
+                  </Card>
 
-            {/* Transactions Table */}
-            <Card className="shadow-lg border-none bg-card/50 backdrop-blur-sm animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
-              <CardHeader className="flex flex-row items-center justify-between">
-                  <div className="space-y-1">
+                  <Card className="shadow-lg border-none bg-card/50 backdrop-blur-sm overflow-hidden h-fit">
+                    <CardHeader>
+                      <CardTitle className="text-xl">Monthly Pulse</CardTitle>
+                      <CardDescription>Key metrics for the current period</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6 pt-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
+                          <p className="text-xs font-bold text-muted-foreground uppercase">Transactions</p>
+                          <p className="text-2xl font-black">{filteredExpenses.length}</p>
+                        </div>
+                        <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
+                          <p className="text-xs font-bold text-muted-foreground uppercase">Daily Avg</p>
+                          <p className="text-2xl font-black">{((totalSpent / 30) || 0).toFixed(0)} <span className="text-xs">{userProfile?.preferredCurrency}</span></p>
+                        </div>
+                      </div>
+                      <div className="p-4 rounded-xl bg-muted/30 border">
+                        <p className="text-xs font-bold text-muted-foreground uppercase mb-1">Vs. Last Month</p>
+                        <div className="flex items-end gap-2">
+                           <p className={`text-2xl font-black ${totalSpent <= lastMonthTotalSpent ? 'text-green-600' : 'text-destructive'}`}>
+                            {totalSpent <= lastMonthTotalSpent ? '↓' : '↑'}
+                            {Math.abs(totalSpent - lastMonthTotalSpent).toFixed(2)}
+                           </p>
+                           <span className="text-xs font-bold opacity-60 pb-1">{userProfile?.preferredCurrency} Difference</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <Card className="shadow-lg border-none bg-card/50 backdrop-blur-sm overflow-hidden">
+                  <CardHeader>
                     <CardTitle className="text-xl">Recent Expenses</CardTitle>
-                    <CardDescription>Activity for {currentMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}.</CardDescription>
-                  </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                <ExpenseTable 
-                  expenses={filteredExpenses} 
-                  onUpdateExpense={handleUpdateExpense} 
-                  onDeleteExpense={handleDeleteExpense} 
-                  currency={userProfile?.preferredCurrency} 
-                />
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sidebar Area */}
-          <aside className="lg:col-span-4 space-y-8">
-             <div className="animate-in fade-in slide-in-from-right-4 duration-700 delay-150 space-y-6">
-                <FinancialQA 
-                  expenses={filteredExpenses} 
-                  currency={userProfile?.preferredCurrency} 
-                  budgetLimit={userProfile?.budgetLimit} 
-                />
-
-                <Card className="shadow-md border-none bg-primary/5 hover:bg-primary/10 transition-colors duration-300">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Monthly Pulse</CardTitle>
+                    <CardDescription>Activity for the selected month</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-muted-foreground">Transactions</span>
-                      <span className="font-bold">{filteredExpenses.length}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-muted-foreground">Daily Avg</span>
-                      <span className="font-bold">{((totalSpent / 30) || 0).toFixed(2)} {userProfile?.preferredCurrency}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-muted-foreground">Vs. Last Month</span>
-                      <span className={`font-bold flex items-center gap-1 ${totalSpent <= lastMonthTotalSpent ? 'text-green-600' : 'text-destructive'}`}>
-                        {totalSpent <= lastMonthTotalSpent ? '↓' : '↑'}
-                        {Math.abs(totalSpent - lastMonthTotalSpent).toFixed(2)} {userProfile?.preferredCurrency}
-                      </span>
-                    </div>
+                  <CardContent className="p-0">
+                    <ExpenseTable 
+                      expenses={filteredExpenses} 
+                      onUpdateExpense={handleUpdateExpense} 
+                      onDeleteExpense={handleDeleteExpense} 
+                      currency={userProfile?.preferredCurrency} 
+                    />
                   </CardContent>
                 </Card>
+              </div>
+            </div>
+          </TabsContent>
 
-                <AchievementBadges 
-                  currentTotal={totalSpent} 
-                  prevTotal={lastMonthTotalSpent} 
-                  limit={userProfile?.budgetLimit || 0} 
-                />
+          <TabsContent value="advisor" className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-4xl mx-auto w-full">
+            <div className="space-y-8">
+              <FinancialQuote />
+              <FinancialQA 
+                expenses={filteredExpenses} 
+                currency={userProfile?.preferredCurrency} 
+                budgetLimit={userProfile?.budgetLimit} 
+              />
+            </div>
+          </TabsContent>
 
-                <WhatIfSimulator 
-                  expenses={filteredExpenses} 
-                  currentTotal={totalSpent} 
-                  budgetLimit={userProfile?.budgetLimit || 0} 
-                  currency={userProfile?.preferredCurrency}
-                />
-             </div>
-          </aside>
-        </div>
+          <TabsContent value="insights" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="grid gap-8 lg:grid-cols-2">
+              <AchievementBadges 
+                currentTotal={totalSpent} 
+                prevTotal={lastMonthTotalSpent} 
+                limit={userProfile?.budgetLimit || 0} 
+              />
+              <WhatIfSimulator 
+                expenses={filteredExpenses} 
+                currentTotal={totalSpent} 
+                budgetLimit={userProfile?.budgetLimit || 0} 
+                currency={userProfile?.preferredCurrency}
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
