@@ -68,6 +68,9 @@ export default function Dashboard() {
   const handleAddExpense = (data: Omit<Expense, 'id'>) => {
     addExpense(data);
     
+    // Trigger celebration on every new expense added as requested
+    triggerCelebration();
+
     if (userProfile?.budgetLimit && (totalSpent + data.amount) > userProfile.budgetLimit) {
       toast({
         title: "Budget Warning!",
@@ -79,10 +82,6 @@ export default function Dashboard() {
         title: "Expense added",
         description: "Your new expense has been recorded successfully.",
       });
-      const hasExpenseToday = filteredExpenses.some(e => new Date(e.date).toDateString() === new Date().toDateString());
-      if (!hasExpenseToday && (!userProfile?.budgetLimit || totalSpent + data.amount < userProfile.budgetLimit)) {
-        triggerCelebration();
-      }
     }
   };
 
