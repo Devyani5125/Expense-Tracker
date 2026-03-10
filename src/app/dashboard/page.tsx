@@ -19,7 +19,7 @@ import { triggerCelebration } from '@/lib/celebration';
 import { AchievementBadges } from '@/components/achievement-badges';
 import { WhatIfSimulator } from '@/components/what-if-simulator';
 import { FinancialQA } from '@/components/financial-qa';
-import { subMonths } from 'date-fns';
+import { format, subMonths } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LayoutDashboard, MessageSquareText, Lightbulb, Wallet } from 'lucide-react';
 
