@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from 'react';
@@ -115,6 +114,7 @@ const ExpenseHeader: React.FC<ExpenseHeaderProps> = ({
           isOpen={isFormOpen}
           onClose={() => setIsFormOpen(false)}
           onSubmit={onAddExpense}
+          defaultDate={currentMonth}
         />
       </header>
     </TooltipProvider>

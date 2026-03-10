@@ -33,7 +33,7 @@ import {
 } from '@/components/ui/dialog';
 import { expenseSchema, categories, paymentMethods, Expense } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, isSameMonth } from 'date-fns';
 import { useEffect } from 'react';
 
 type ExpenseFormData = z.infer<typeof expenseSchema>;
@@ -43,9 +43,10 @@ interface ExpenseFormProps {
   onClose: () => void;
   onSubmit: (data: Omit<Expense, 'id'>) => void;
   initialData?: Expense | null;
+  defaultDate?: Date;
 }
 
-export function ExpenseForm({ isOpen, onClose, onSubmit, initialData }: ExpenseFormProps) {
+export function ExpenseForm({ isOpen, onClose, onSubmit, initialData, defaultDate }: ExpenseFormProps) {
   const form = useForm<ExpenseFormData>({
     resolver: zodResolver(expenseSchema),
     defaultValues: {
@@ -66,16 +67,21 @@ export function ExpenseForm({ isOpen, onClose, onSubmit, initialData }: ExpenseF
           date: new Date(initialData.date),
         });
       } else {
+          // If we have a defaultDate from navigation, and it's not the current month, 
+          // use it. Otherwise use today.
+          const now = new Date();
+          const targetDate = defaultDate && !isSameMonth(defaultDate, now) ? defaultDate : now;
+          
           form.reset({
               title: '',
               amount: 0,
-              date: new Date(),
+              date: targetDate,
               category: 'Food',
               paymentMethod: 'Cash',
           });
       }
     }
-  }, [initialData, form, isOpen]);
+  }, [initialData, form, isOpen, defaultDate]);
 
   const handleFormSubmit = (data: ExpenseFormData) => {
     onSubmit(data);
