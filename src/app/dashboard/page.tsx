@@ -43,7 +43,8 @@ export default function Dashboard() {
   const [categoryFilter, setCategoryFilter] = useState<Category | 'all'>('all');
   const [currentMonth, setCurrentMonth] = useState(new Date());
   
-  // State for Anonymous User Sign Up Prompt
+  // State for Anonymous User Tracking
+  const [expensesAddedCount, setExpensesAddedCount] = useState(0);
   const [showSignUpPrompt, setShowSignUpPrompt] = useState(false);
   const [signUpEmail, setSignUpEmail] = useState('');
   const [signUpPassword, setSignUpPassword] = useState('');
@@ -86,6 +87,9 @@ export default function Dashboard() {
     addExpense(data);
     triggerCelebration();
 
+    const newCount = expensesAddedCount + 1;
+    setExpensesAddedCount(newCount);
+
     if (userProfile?.budgetLimit && (totalSpent + data.amount) > userProfile.budgetLimit) {
       toast({
         title: "Budget Warning!",
@@ -99,8 +103,8 @@ export default function Dashboard() {
       });
     }
 
-    // Trigger Sign Up Prompt for Anonymous Users
-    if (user?.isAnonymous) {
+    // Trigger Sign Up Prompt for Anonymous Users after 5 additions
+    if (user?.isAnonymous && newCount >= 5) {
       // Delay slightly to allow confetti/toast to finish
       setTimeout(() => {
         setShowSignUpPrompt(true);
@@ -298,7 +302,7 @@ export default function Dashboard() {
               </div>
               <DialogTitle className="text-2xl font-black tracking-tighter">Save Your Progress!</DialogTitle>
               <DialogDescription className="text-primary-foreground/90 font-medium">
-                You're using a guest account. Create a permanent account to sync your expenses across devices and never lose your data.
+                You've logged {expensesAddedCount} expenses! Create a permanent account to sync your data across devices and never lose your hard work.
               </DialogDescription>
             </DialogHeader>
           </div>
