@@ -8,7 +8,7 @@ import ExpenseStats from '@/components/expense-stats';
 import ExpenseChart from '@/components/expense-chart';
 import { ExpenseTable } from '@/components/expense-table';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { useUser } from '@/firebase';
+import { useUser, useAuth } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useUserProfile } from '@/hooks/use-user-profile';
 import { useToast } from '@/hooks/use-toast';
@@ -21,16 +21,32 @@ import { WhatIfSimulator } from '@/components/what-if-simulator';
 import { FinancialQA } from '@/components/financial-qa';
 import { format, subMonths } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LayoutDashboard, MessageSquareText, Lightbulb, Wallet } from 'lucide-react';
+import { LayoutDashboard, MessageSquareText, Lightbulb, Wallet, Sparkles, UserPlus } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { initiateEmailSignUp } from '@/firebase/non-blocking-login';
 
 export default function Dashboard() {
   const { user, isUserLoading } = useUser();
   const { userProfile } = useUserProfile();
+  const auth = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const { expenses, addExpense, updateExpense, deleteExpense, isLoading } = useExpenses(user?.uid);
   const [categoryFilter, setCategoryFilter] = useState<Category | 'all'>('all');
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  
+  // State for Anonymous User Sign Up Prompt
+  const [showSignUpPrompt, setShowSignUpPrompt] = useState(false);
+  const [signUpEmail, setSignUpEmail] = useState('');
+  const [signUpPassword, setSignUpPassword] = useState('');
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -82,6 +98,14 @@ export default function Dashboard() {
         description: "Your new expense has been recorded successfully.",
       });
     }
+
+    // Trigger Sign Up Prompt for Anonymous Users
+    if (user?.isAnonymous) {
+      // Delay slightly to allow confetti/toast to finish
+      setTimeout(() => {
+        setShowSignUpPrompt(true);
+      }, 1500);
+    }
   };
 
   const handleUpdateExpense = (data: Expense) => {
@@ -98,6 +122,16 @@ export default function Dashboard() {
       title: "Expense deleted",
       description: "The expense has been removed from your list.",
       variant: "destructive",
+    });
+  };
+
+  const handleFinalSignUp = (e: React.FormEvent) => {
+    e.preventDefault();
+    initiateEmailSignUp(auth, signUpEmail, signUpPassword);
+    setShowSignUpPrompt(false);
+    toast({
+      title: "Account Created!",
+      description: "Your data is now safely synced to your account.",
     });
   };
 
@@ -252,6 +286,54 @@ export default function Dashboard() {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Sign Up Prompt Dialog for Anonymous Users */}
+      <Dialog open={showSignUpPrompt} onOpenChange={setShowSignUpPrompt}>
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden border-none shadow-3xl bg-background/80 backdrop-blur-2xl">
+          <div className="bg-gradient-to-br from-primary to-accent p-8 text-primary-foreground relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+            <DialogHeader className="relative z-10">
+              <div className="h-12 w-12 rounded-2xl bg-white/20 flex items-center justify-center mb-4">
+                <UserPlus className="h-6 w-6 text-white" />
+              </div>
+              <DialogTitle className="text-2xl font-black tracking-tighter">Save Your Progress!</DialogTitle>
+              <DialogDescription className="text-primary-foreground/90 font-medium">
+                You're using a guest account. Create a permanent account to sync your expenses across devices and never lose your data.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          <div className="p-6 space-y-4">
+            <form onSubmit={handleFinalSignUp} className="space-y-4">
+              <div className="space-y-2">
+                <Input
+                  type="email"
+                  placeholder="Email Address"
+                  value={signUpEmail}
+                  onChange={(e) => setSignUpEmail(e.target.value)}
+                  required
+                  className="bg-muted/30 border-none font-bold"
+                />
+              </div>
+              <div className="space-y-2">
+                <Input
+                  type="password"
+                  placeholder="Password"
+                  value={signUpPassword}
+                  onChange={(e) => setSignUpPassword(e.target.value)}
+                  required
+                  className="bg-muted/30 border-none font-bold"
+                />
+              </div>
+              <Button type="submit" className="w-full h-12 font-black uppercase tracking-widest shadow-lg">
+                <Sparkles className="mr-2 h-4 w-4" /> SECURE MY DATA
+              </Button>
+            </form>
+            <Button variant="ghost" className="w-full text-xs font-bold text-muted-foreground" onClick={() => setShowSignUpPrompt(false)}>
+              I'll do it later
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
