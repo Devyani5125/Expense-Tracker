@@ -123,7 +123,7 @@ export default function LandingPage() {
                   <Button size="lg" onClick={() => setIsAuthOpen(true)} className="h-16 rounded-full px-10 text-xl font-black shadow-2xl hover:scale-105 active:scale-95 transition-all">
                     START TRACKING <ArrowRight className="ml-2 h-6 w-6" />
                   </Button>
-                  <Button size="lg" variant="outline" className="h-16 rounded-full px-10 text-xl font-black hover:bg-muted/50 backdrop-blur-sm">
+                  <Button size="lg" variant="outline" onClick={handleAnonymousSignIn} className="h-16 rounded-full px-10 text-xl font-black hover:bg-muted/50 backdrop-blur-sm">
                     VIEW DEMO
                   </Button>
                 </div>
