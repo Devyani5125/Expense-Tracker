@@ -1,3 +1,21 @@
+
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-dashboard",
+      "url": "https://picsum.photos/seed/finance-hero/1200/800",
+      "alt": "Modern financial dashboard overview",
+      "width": 1200,
+      "height": 800,
+      "hint": "financial dashboard"
+    },
+    {
+      "id": "ai-advisor-preview",
+      "url": "https://picsum.photos/seed/ai-chat/600/400",
+      "alt": "AI financial advisor chat interface",
+      "width": 600,
+      "height": 400,
+      "hint": "ai interface"
+    }
+  ]
 }
