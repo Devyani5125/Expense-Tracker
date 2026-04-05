@@ -23,7 +23,7 @@ import { FinancialQA } from '@/components/financial-qa';
 import { CarbonFootprintView } from '@/components/carbon-footprint-view';
 import { format, subMonths } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LayoutDashboard, MessageSquareText, Lightbulb, Wallet, Sparkles, UserPlus, Leaf } from 'lucide-react';
+import { LayoutDashboard, MessageSquareText, Lightbulb, Wallet, Sparkles, UserPlus, Leaf, ShieldAlert } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -33,7 +33,10 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
 import { initiateEmailSignUp } from '@/firebase/non-blocking-login';
+
+const GUEST_EXPENSE_LIMIT = 3;
 
 export default function Dashboard() {
   const { user, isUserLoading } = useUser();
@@ -45,8 +48,7 @@ export default function Dashboard() {
   const [categoryFilter, setCategoryFilter] = useState<Category | 'all'>('all');
   const [currentMonth, setCurrentMonth] = useState(new Date());
   
-  // State for Anonymous User Tracking
-  const [expensesAddedCount, setExpensesAddedCount] = useState(0);
+  // State for SignUp Modal
   const [showSignUpPrompt, setShowSignUpPrompt] = useState(false);
   const [signUpEmail, setSignUpEmail] = useState('');
   const [signUpPassword, setSignUpPassword] = useState('');
@@ -56,6 +58,13 @@ export default function Dashboard() {
       router.push('/');
     }
   }, [user, isUserLoading, router]);
+
+  // Enforce Guest Limit
+  useEffect(() => {
+    if (user?.isAnonymous && expenses && expenses.length >= GUEST_EXPENSE_LIMIT) {
+      setShowSignUpPrompt(true);
+    }
+  }, [user, expenses]);
 
   const filteredExpenses = useMemo(() => {
     if (!expenses) return [];
@@ -86,10 +95,13 @@ export default function Dashboard() {
   }, [expenses, currentMonth]);
 
   const handleAddExpense = (data: Omit<Expense, 'id'>) => {
+    if (user?.isAnonymous && expenses && expenses.length >= GUEST_EXPENSE_LIMIT) {
+      setShowSignUpPrompt(true);
+      return;
+    }
+
     addExpense(data);
     triggerCelebration();
-    const newCount = expensesAddedCount + 1;
-    setExpensesAddedCount(newCount);
 
     if (userProfile?.budgetLimit && (totalSpent + data.amount) > userProfile.budgetLimit) {
       toast({
@@ -102,12 +114,6 @@ export default function Dashboard() {
         title: "Expense added",
         description: "Your new expense has been recorded successfully.",
       });
-    }
-
-    if (user?.isAnonymous && newCount >= 5) {
-      setTimeout(() => {
-        setShowSignUpPrompt(true);
-      }, 1500);
     }
   };
 
@@ -149,6 +155,9 @@ export default function Dashboard() {
       </div>
     );
   }
+
+  const currentCount = expenses?.length || 0;
+  const progressPercent = Math.min((currentCount / GUEST_EXPENSE_LIMIT) * 100, 100);
   
   return (
     <div className="flex min-h-screen w-full flex-col bg-background selection:bg-primary/20">
@@ -301,49 +310,65 @@ export default function Dashboard() {
         </Tabs>
       </main>
 
-      <Dialog open={showSignUpPrompt} onOpenChange={setShowSignUpPrompt}>
-        <DialogContent className="sm:max-w-md p-0 overflow-hidden border-none shadow-3xl bg-background/80 backdrop-blur-2xl">
-          <div className="bg-gradient-to-br from-primary to-accent p-8 text-primary-foreground relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+      {/* Sign-up Modal (Blocks Guest after 3 expenses) */}
+      <Dialog 
+        open={showSignUpPrompt} 
+        onOpenChange={(open) => {
+          // If guest has hit limit, don't allow closing
+          if (user?.isAnonymous && currentCount >= GUEST_EXPENSE_LIMIT) return;
+          setShowSignUpPrompt(open);
+        }}
+      >
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden border-none shadow-3xl bg-background/90 backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-300">
+          <div className="bg-gradient-to-br from-primary via-primary/90 to-accent p-8 text-primary-foreground relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
             <DialogHeader className="relative z-10">
               <div className="h-12 w-12 rounded-2xl bg-white/20 flex items-center justify-center mb-4">
-                <UserPlus className="h-6 w-6 text-white" />
+                <ShieldAlert className="h-6 w-6 text-white" />
               </div>
-              <DialogTitle className="text-2xl font-black tracking-tighter">Save Your Progress!</DialogTitle>
-              <DialogDescription className="text-primary-foreground/90 font-medium">
-                You've logged {expensesAddedCount} expenses! Create a permanent account to sync your data across devices and never lose your hard work.
+              <DialogTitle className="text-3xl font-black tracking-tighter">Guest Limit Reached!</DialogTitle>
+              <DialogDescription className="text-primary-foreground/90 font-medium text-lg leading-tight mt-2">
+                You've reached the guest limit! Sign up to track unlimited expenses & unlock all features.
               </DialogDescription>
             </DialogHeader>
           </div>
-          <div className="p-6 space-y-4">
+          
+          <div className="p-8 space-y-6">
+            <div className="space-y-3">
+              <div className="flex justify-between items-center text-sm font-black uppercase tracking-widest text-muted-foreground">
+                <span>Free Tier Progress</span>
+                <span className="text-primary">{currentCount}/{GUEST_EXPENSE_LIMIT} Used</span>
+              </div>
+              <Progress value={progressPercent} className="h-3 bg-muted rounded-full overflow-hidden" />
+            </div>
+
             <form onSubmit={handleFinalSignUp} className="space-y-4">
-              <div className="space-y-2">
+              <div className="space-y-4">
                 <Input
                   type="email"
                   placeholder="Email Address"
                   value={signUpEmail}
                   onChange={(e) => setSignUpEmail(e.target.value)}
                   required
-                  className="bg-muted/30 border-none font-bold"
+                  className="h-14 bg-muted/30 border-none font-bold text-lg px-4 focus-visible:ring-primary"
                 />
-              </div>
-              <div className="space-y-2">
                 <Input
                   type="password"
-                  placeholder="Password"
+                  placeholder="Create Password"
                   value={signUpPassword}
                   onChange={(e) => setSignUpPassword(e.target.value)}
                   required
-                  className="bg-muted/30 border-none font-bold"
+                  className="h-14 bg-muted/30 border-none font-bold text-lg px-4 focus-visible:ring-primary"
                 />
               </div>
-              <Button type="submit" className="w-full h-12 font-black uppercase tracking-widest shadow-lg">
-                <Sparkles className="mr-2 h-4 w-4" /> SECURE MY DATA
+              <Button type="submit" className="w-full h-16 text-xl font-black uppercase tracking-widest shadow-2xl bg-primary hover:bg-primary/90 hover:scale-[1.02] transition-all">
+                <UserPlus className="mr-3 h-6 w-6" /> CREATE ACCOUNT
               </Button>
             </form>
-            <Button variant="ghost" className="w-full text-xs font-bold text-muted-foreground" onClick={() => setShowSignUpPrompt(false)}>
-              I'll do it later
-            </Button>
+            
+            <p className="text-center text-xs text-muted-foreground font-medium">
+              By signing up, your {currentCount} guest expenses will be safely moved to your new account.
+            </p>
           </div>
         </DialogContent>
       </Dialog>
