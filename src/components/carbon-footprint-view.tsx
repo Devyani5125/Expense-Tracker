@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo } from 'react';
@@ -201,7 +200,7 @@ export function CarbonFootprintView({ expenses, currency }: CarbonFootprintViewP
                        </div>
                     </div>
                     <ul className="space-y-3">
-                      {(ECO_SUGGESTIONS[cat.name] || ECO_SUGGESTIONS['Others']).map((tip, i) => (
+                      {(ECO_SUGGESTIONS[cat.name] || ECO_SUGGESTIONS['Others'] || []).map((tip, i) => (
                         <li key={i} className="flex items-start gap-3 text-xs leading-relaxed">
                           <TrendingDown className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
                           <span>{tip}</span>

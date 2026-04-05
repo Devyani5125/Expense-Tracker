@@ -1,4 +1,3 @@
-
 import { Category } from './types';
 
 export const CARBON_COEFFICIENTS: Record<Category, number> = {
@@ -55,5 +54,15 @@ export const ECO_SUGGESTIONS: Record<string, string[]> = {
     "Switch to a renewable energy provider if available.",
     "Improve home insulation to reduce heating and cooling costs.",
     "Unplug electronics when not in use to stop 'vampire' energy."
+  ],
+  Education: [
+    "Opt for digital textbooks instead of printed ones.",
+    "Support institutions that prioritize sustainability and renewable energy.",
+    "Share or donate used educational materials to reduce waste."
+  ],
+  Others: [
+    "Track your carbon footprint regularly to stay mindful of your impact.",
+    "Offset remaining emissions through verified carbon offset projects.",
+    "Encourage others in your network to adopt sustainable spending habits."
   ]
 };
