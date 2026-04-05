@@ -84,12 +84,17 @@ export default function Dashboard() {
   }, [expenses, currentMonth]);
 
   const handleAddExpense = (data: Omit<Expense, 'id'>) => {
+    // 1. Add the expense to Firestore
     addExpense(data);
+    
+    // 2. Trigger the "Sprinkler" celebration!
     triggerCelebration();
 
+    // 3. Update local count for anonymous sign-up prompt
     const newCount = expensesAddedCount + 1;
     setExpensesAddedCount(newCount);
 
+    // 4. Show toast notification
     if (userProfile?.budgetLimit && (totalSpent + data.amount) > userProfile.budgetLimit) {
       toast({
         title: "Budget Warning!",
@@ -103,9 +108,8 @@ export default function Dashboard() {
       });
     }
 
-    // Trigger Sign Up Prompt for Anonymous Users after 5 additions
+    // 5. Trigger Sign Up Prompt for Anonymous Users after 5 additions
     if (user?.isAnonymous && newCount >= 5) {
-      // Delay slightly to allow confetti/toast to finish
       setTimeout(() => {
         setShowSignUpPrompt(true);
       }, 1500);
