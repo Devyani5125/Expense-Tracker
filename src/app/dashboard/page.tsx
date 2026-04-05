@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -19,9 +20,10 @@ import { triggerCelebration } from '@/lib/celebration';
 import { AchievementBadges } from '@/components/achievement-badges';
 import { WhatIfSimulator } from '@/components/what-if-simulator';
 import { FinancialQA } from '@/components/financial-qa';
+import { CarbonFootprintView } from '@/components/carbon-footprint-view';
 import { format, subMonths } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LayoutDashboard, MessageSquareText, Lightbulb, Wallet, Sparkles, UserPlus } from 'lucide-react';
+import { LayoutDashboard, MessageSquareText, Lightbulb, Wallet, Sparkles, UserPlus, Leaf } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -84,17 +86,11 @@ export default function Dashboard() {
   }, [expenses, currentMonth]);
 
   const handleAddExpense = (data: Omit<Expense, 'id'>) => {
-    // 1. Add the expense to Firestore
     addExpense(data);
-    
-    // 2. Trigger the "Sprinkler" celebration!
     triggerCelebration();
-
-    // 3. Update local count for anonymous sign-up prompt
     const newCount = expensesAddedCount + 1;
     setExpensesAddedCount(newCount);
 
-    // 4. Show toast notification
     if (userProfile?.budgetLimit && (totalSpent + data.amount) > userProfile.budgetLimit) {
       toast({
         title: "Budget Warning!",
@@ -108,7 +104,6 @@ export default function Dashboard() {
       });
     }
 
-    // 5. Trigger Sign Up Prompt for Anonymous Users after 5 additions
     if (user?.isAnonymous && newCount >= 5) {
       setTimeout(() => {
         setShowSignUpPrompt(true);
@@ -168,18 +163,22 @@ export default function Dashboard() {
       <main className="flex flex-1 flex-col gap-8 p-4 md:p-8 max-w-7xl mx-auto w-full">
         <Tabs defaultValue="spending" className="w-full space-y-8">
           <div className="flex items-center justify-between flex-col md:flex-row gap-4">
-            <TabsList className="grid grid-cols-3 w-full md:w-[400px] h-12 bg-muted/50 p-1 border">
+            <TabsList className="grid grid-cols-4 w-full md:w-[500px] h-12 bg-muted/50 p-1 border">
               <TabsTrigger value="spending" className="flex items-center gap-2 data-[state=active]:bg-background">
                 <Wallet className="h-4 w-4" />
                 <span className="hidden sm:inline">Spending</span>
               </TabsTrigger>
               <TabsTrigger value="advisor" className="flex items-center gap-2 data-[state=active]:bg-background">
                 <MessageSquareText className="h-4 w-4" />
-                <span className="hidden sm:inline">AI Advisor</span>
+                <span className="hidden sm:inline">Advisor</span>
               </TabsTrigger>
               <TabsTrigger value="insights" className="flex items-center gap-2 data-[state=active]:bg-background">
                 <Lightbulb className="h-4 w-4" />
                 <span className="hidden sm:inline">Planning</span>
+              </TabsTrigger>
+              <TabsTrigger value="eco" className="flex items-center gap-2 data-[state=active]:bg-background data-[state=active]:text-emerald-600">
+                <Leaf className="h-4 w-4" />
+                <span className="hidden sm:inline">Eco</span>
               </TabsTrigger>
             </TabsList>
             
@@ -292,10 +291,16 @@ export default function Dashboard() {
               />
             </div>
           </TabsContent>
+
+          <TabsContent value="eco" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+             <CarbonFootprintView 
+               expenses={filteredExpenses} 
+               currency={userProfile?.preferredCurrency} 
+             />
+          </TabsContent>
         </Tabs>
       </main>
 
-      {/* Sign Up Prompt Dialog for Anonymous Users */}
       <Dialog open={showSignUpPrompt} onOpenChange={setShowSignUpPrompt}>
         <DialogContent className="sm:max-w-md p-0 overflow-hidden border-none shadow-3xl bg-background/80 backdrop-blur-2xl">
           <div className="bg-gradient-to-br from-primary to-accent p-8 text-primary-foreground relative overflow-hidden">
