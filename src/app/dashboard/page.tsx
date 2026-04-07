@@ -23,7 +23,7 @@ import { FinancialQA } from '@/components/financial-qa';
 import { CarbonFootprintView } from '@/components/carbon-footprint-view';
 import { format, subMonths } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Wallet, MessageSquareText, Lightbulb, Leaf, ShieldAlert, UserPlus } from 'lucide-react';
+import { Wallet, MessageSquareText, Lightbulb, Leaf, ShieldAlert, UserPlus, Sparkles } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -45,71 +45,81 @@ const GUEST_EXPENSE_LIMIT = 3;
  * colors and floating blobs based on the active tab.
  */
 const TabBackground = ({ activeTab }: { activeTab: string }) => {
-  const configs: Record<string, { aurora: string; blobs: string[] }> = {
+  const configs: Record<string, { aurora: string; blobs: string[]; animationType?: 'float' | 'rise' }> = {
     spending: {
-      aurora: "from-emerald-500/20 via-teal-500/10 to-transparent",
+      aurora: "from-emerald-600/20 via-teal-500/10 to-transparent",
       blobs: ["bg-emerald-400/20", "bg-teal-500/10", "bg-green-300/10"],
+      animationType: 'float'
     },
     advisor: {
-      aurora: "from-indigo-600/20 via-purple-500/10 to-transparent",
-      blobs: ["bg-indigo-400/20", "bg-violet-500/10", "bg-purple-300/10"],
+      aurora: "from-indigo-700/25 via-violet-600/10 to-transparent",
+      blobs: ["bg-indigo-500/20", "bg-violet-600/15", "bg-blue-400/10"],
+      animationType: 'float'
     },
     insights: {
-      aurora: "from-amber-500/20 via-orange-400/10 to-transparent",
-      blobs: ["bg-yellow-400/20", "bg-orange-500/10", "bg-amber-300/10"],
+      aurora: "from-amber-600/20 via-orange-500/10 to-transparent",
+      blobs: ["bg-yellow-400/20", "bg-orange-500/15", "bg-amber-300/10"],
+      animationType: 'float'
     },
     eco: {
-      aurora: "from-green-700/20 via-emerald-600/10 to-transparent",
-      blobs: ["bg-green-500/20", "bg-emerald-400/10", "bg-teal-300/10"],
+      aurora: "from-green-800/20 via-emerald-700/10 to-transparent",
+      blobs: ["bg-green-500/20", "bg-emerald-400/15", "bg-teal-300/10"],
+      animationType: 'rise'
     },
   };
 
   const current = configs[activeTab] || configs.spending;
 
   return (
-    <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden rounded-[2rem]">
-      {/* Aurora Layer */}
+    <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden rounded-[2.5rem]">
+      {/* Aurora Base Layer */}
       <AnimatePresence mode="wait">
         <motion.div
           key={activeTab + '-aurora'}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.8 }}
-          className={cn("absolute inset-0 bg-gradient-to-b", current.aurora)}
+          transition={{ duration: 0.6 }}
+          className={cn("absolute inset-0 bg-gradient-to-br", current.aurora)}
         />
       </AnimatePresence>
 
-      {/* Floating Orbs */}
+      {/* Floating or Rising Elements */}
       <div className="absolute inset-0">
         {current.blobs.map((blobClass, i) => (
           <motion.div
-            key={activeTab + '-blob-' + i}
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ 
-              scale: [1, 1.2, 1], 
-              opacity: [0.3, 0.5, 0.3],
-              x: [0, 50, -30, 0],
-              y: [0, -40, 60, 0]
+            key={activeTab + '-element-' + i}
+            initial={current.animationType === 'rise' ? { y: '110%', opacity: 0 } : { scale: 0.8, opacity: 0 }}
+            animate={current.animationType === 'rise' ? {
+              y: ['110%', '-10%'],
+              x: [Math.sin(i) * 50, Math.cos(i) * 50],
+              opacity: [0, 0.4, 0]
+            } : { 
+              scale: [1, 1.3, 1], 
+              opacity: [0.2, 0.4, 0.2],
+              x: [0, 60, -40, 0],
+              y: [0, -50, 70, 0]
             }}
             transition={{ 
-              duration: 10 + i * 5, 
+              duration: current.animationType === 'rise' ? 8 + i * 4 : 15 + i * 5, 
               repeat: Infinity, 
-              ease: "easeInOut" 
+              ease: "easeInOut",
+              delay: i * 2
             }}
             className={cn(
-              "absolute rounded-full blur-[100px]",
+              "absolute rounded-full blur-[110px]",
               blobClass,
-              i === 0 ? "w-[400px] h-[400px] -top-20 -left-20" :
-              i === 1 ? "w-[500px] h-[500px] -bottom-40 -right-20" :
-              "w-[300px] h-[300px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+              current.animationType === 'rise' ? "w-32 h-32" : 
+              i === 0 ? "w-[450px] h-[450px] -top-20 -left-20" :
+              i === 1 ? "w-[550px] h-[550px] -bottom-40 -right-20" :
+              "w-[350px] h-[350px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
             )}
           />
         ))}
       </div>
 
-      {/* Noise Texture Overlay */}
-      <div className="absolute inset-0 bg-noise opacity-[0.03] mix-blend-overlay" />
+      {/* Premium Texture Overlay */}
+      <div className="absolute inset-0 bg-noise opacity-[0.04] mix-blend-overlay" />
     </div>
   );
 };
@@ -221,12 +231,16 @@ export default function Dashboard() {
 
   if (isUserLoading || !user) {
     return (
-      <div className="flex h-screen w-full flex-col items-center justify-center gap-4 bg-background">
-        <div className="relative h-16 w-16">
-          <div className="absolute inset-0 animate-ping rounded-full bg-primary/20"></div>
-          <div className="absolute inset-2 animate-pulse rounded-full bg-primary"></div>
-        </div>
-        <p className="text-sm font-medium text-muted-foreground animate-pulse">Initializing your workspace...</p>
+      <div className="flex h-screen w-full flex-col items-center justify-center gap-4 bg-[#0a0f1e]">
+        <motion.div 
+          animate={{ rotate: 360 }}
+          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          className="relative h-16 w-16"
+        >
+          <div className="absolute inset-0 rounded-full border-4 border-primary/20" />
+          <div className="absolute inset-0 rounded-full border-t-4 border-primary shadow-[0_0_15px_rgba(var(--primary),0.5)]" />
+        </motion.div>
+        <p className="text-sm font-black uppercase tracking-widest text-primary animate-pulse">Syncing Workspace...</p>
       </div>
     );
   }
@@ -235,7 +249,7 @@ export default function Dashboard() {
   const progressPercent = Math.min((currentCount / GUEST_EXPENSE_LIMIT) * 100, 100);
   
   return (
-    <div className="flex min-h-screen w-full flex-col selection:bg-primary/20">
+    <div className="flex min-h-screen w-full flex-col selection:bg-primary/20 overflow-x-hidden bg-background">
       <ExpenseHeader
         onAddExpense={handleAddExpense}
         categoryFilter={categoryFilter}
@@ -244,45 +258,48 @@ export default function Dashboard() {
         setCurrentMonth={setCurrentMonth}
       />
       
-      <main className="flex flex-1 flex-col gap-8 p-4 md:p-8 max-w-7xl mx-auto w-full">
+      <main className="flex flex-1 flex-col gap-8 p-4 md:p-8 max-w-7xl mx-auto w-full pb-20">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-8">
-          <div className="flex items-center justify-between flex-col md:flex-row gap-4">
-            <TabsList className="grid grid-cols-4 w-full md:w-[500px] h-12 glass-card p-1 relative z-20">
-              <TabsTrigger value="spending" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <div className="flex items-center justify-between flex-col md:flex-row gap-6 relative z-30">
+            <TabsList className="grid grid-cols-4 w-full md:w-[550px] h-14 glass-card p-1.5 border-white/10">
+              <TabsTrigger value="spending" className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xl transition-all">
                 <Wallet className="h-4 w-4" />
-                <span className="hidden sm:inline">Spending</span>
+                <span className="hidden sm:inline font-bold">Spending</span>
               </TabsTrigger>
-              <TabsTrigger value="advisor" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <TabsTrigger value="advisor" className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xl transition-all">
                 <MessageSquareText className="h-4 w-4" />
-                <span className="hidden sm:inline">Advisor</span>
+                <span className="hidden sm:inline font-bold">Advisor</span>
               </TabsTrigger>
-              <TabsTrigger value="insights" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <TabsTrigger value="insights" className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xl transition-all">
                 <Lightbulb className="h-4 w-4" />
-                <span className="hidden sm:inline">Planning</span>
+                <span className="hidden sm:inline font-bold">Planning</span>
               </TabsTrigger>
-              <TabsTrigger value="eco" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <TabsTrigger value="eco" className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-xl transition-all">
                 <Leaf className="h-4 w-4" />
-                <span className="hidden sm:inline">Eco</span>
+                <span className="hidden sm:inline font-bold">Eco</span>
               </TabsTrigger>
             </TabsList>
             
-            <div className="hidden md:block relative z-20">
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="hidden md:block"
+            >
                <DailyReminder expenses={expenses || []} />
-            </div>
+            </motion.div>
           </div>
 
-          {/* This container houses the tab backgrounds and content */}
-          <div className="relative min-h-[600px] rounded-[2rem] p-1 md:p-4 overflow-hidden">
+          <div className="relative min-h-[700px] rounded-[2.5rem] p-1 md:p-6 overflow-hidden shadow-[0_40px_100px_-20px_rgba(0,0,0,0.3)]">
             <TabBackground activeTab={activeTab} />
 
             <div className="relative z-10 w-full h-full">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeTab}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.4, ease: "easeOut" }}
+                  initial={{ opacity: 0, scale: 0.98, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.98, y: -10 }}
+                  transition={{ duration: 0.4, ease: "circOut" }}
                 >
                   <TabsContent value="spending" className="m-0 space-y-8">
                     <section>
@@ -302,52 +319,57 @@ export default function Dashboard() {
                         />
 
                         <div className="grid gap-8 md:grid-cols-2">
-                          <Card className="glass-card h-fit">
+                          <Card className="glass-card h-fit border-white/5 shadow-2xl">
                             <CardHeader>
-                              <CardTitle className="text-xl">Spending Breakdown</CardTitle>
+                              <CardTitle className="text-xl font-black tracking-tight">Spending Breakdown</CardTitle>
                               <CardDescription>Visual category distribution for {format(currentMonth, 'MMMM yyyy')}</CardDescription>
                             </CardHeader>
                             <CardContent>
-                              <div className="h-[350px] w-full py-4">
+                              <div className="h-[380px] w-full py-4">
                                 <ExpenseChart expenses={filteredExpenses} currency={userProfile?.preferredCurrency} />
                               </div>
                             </CardContent>
                           </Card>
 
-                          <Card className="glass-card h-fit">
+                          <Card className="glass-card h-fit border-white/5 shadow-2xl">
                             <CardHeader>
-                              <CardTitle className="text-xl">Monthly Pulse</CardTitle>
-                              <CardDescription>Key metrics for the current period</CardDescription>
+                              <CardTitle className="text-xl font-black tracking-tight">Monthly Pulse</CardTitle>
+                              <CardDescription>Key performance metrics</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6 pt-4">
                               <div className="grid grid-cols-2 gap-4">
-                                <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
-                                  <p className="text-xs font-bold text-muted-foreground uppercase">Transactions</p>
-                                  <p className="text-2xl font-black">{filteredExpenses.length}</p>
-                                </div>
-                                <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
-                                  <p className="text-xs font-bold text-muted-foreground uppercase">Daily Avg</p>
-                                  <p className="text-2xl font-black">{((totalSpent / 30) || 0).toFixed(0)} <span className="text-xs">{userProfile?.preferredCurrency}</span></p>
-                                </div>
+                                <motion.div whileHover={{ y: -5 }} className="p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+                                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Transactions</p>
+                                  <p className="text-3xl font-black">{filteredExpenses.length}</p>
+                                </motion.div>
+                                <motion.div whileHover={{ y: -5 }} className="p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+                                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Daily Avg</p>
+                                  <p className="text-3xl font-black">{((totalSpent / 30) || 0).toFixed(0)} <span className="text-xs">{userProfile?.preferredCurrency}</span></p>
+                                </motion.div>
                               </div>
-                              <div className="p-4 rounded-xl bg-muted/30 border">
-                                <p className="text-xs font-bold text-muted-foreground uppercase mb-1">Vs. Last Month</p>
-                                <div className="flex items-end gap-2">
-                                  <p className={`text-2xl font-black ${totalSpent <= lastMonthTotalSpent ? 'text-green-600' : 'text-destructive'}`}>
+                              <div className="p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+                                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Vs. Last Month</p>
+                                <div className="flex items-end gap-3">
+                                  <p className={`text-3xl font-black ${totalSpent <= lastMonthTotalSpent ? 'text-emerald-500' : 'text-destructive'}`}>
                                     {totalSpent <= lastMonthTotalSpent ? '↓' : '↑'}
-                                    {Math.abs(totalSpent - lastMonthTotalSpent).toFixed(2)}
+                                    {formatCurrency(Math.abs(totalSpent - lastMonthTotalSpent), userProfile?.preferredCurrency)}
                                   </p>
-                                  <span className="text-xs font-bold opacity-60 pb-1">{userProfile?.preferredCurrency} Difference</span>
+                                  <span className="text-[10px] font-bold opacity-60 pb-1.5 uppercase tracking-tighter">Variance</span>
                                 </div>
                               </div>
                             </CardContent>
                           </Card>
                         </div>
 
-                        <Card className="glass-card">
-                          <CardHeader>
-                            <CardTitle className="text-xl">Recent Expenses</CardTitle>
-                            <CardDescription>Activity for the selected month</CardDescription>
+                        <Card className="glass-card border-white/5 shadow-2xl">
+                          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                            <div>
+                                <CardTitle className="text-xl font-black tracking-tight">Recent Activity</CardTitle>
+                                <CardDescription>Detailed expense ledger</CardDescription>
+                            </div>
+                            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                                <Wallet className="h-5 w-5 text-primary" />
+                            </div>
                           </CardHeader>
                           <CardContent className="p-0">
                             <ExpenseTable 
@@ -412,7 +434,7 @@ export default function Dashboard() {
           <div className="bg-gradient-to-br from-primary via-emerald-600 to-teal-700 p-8 text-primary-foreground relative overflow-hidden">
             <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
             <DialogHeader className="relative z-10">
-              <div className="h-12 w-12 rounded-2xl bg-white/20 flex items-center justify-center mb-4">
+              <div className="h-12 w-12 rounded-2xl bg-white/20 flex items-center justify-center mb-4 shadow-xl">
                 <ShieldAlert className="h-6 w-6 text-white" />
               </div>
               <DialogTitle className="text-3xl font-black tracking-tighter">Guest Limit Reached!</DialogTitle>
@@ -424,7 +446,7 @@ export default function Dashboard() {
           
           <div className="p-8 space-y-6">
             <div className="space-y-3">
-              <div className="flex justify-between items-center text-sm font-black uppercase tracking-widest text-muted-foreground">
+              <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
                 <span>Free Tier Progress</span>
                 <span className="text-primary">{currentCount}/{GUEST_EXPENSE_LIMIT} Used</span>
               </div>
