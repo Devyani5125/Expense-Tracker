@@ -24,6 +24,13 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 160 84% 39%;
     --radius: 1rem;
+
+    /* Chart Colors - Radiant Green/Teal Palette */
+    --chart-1: 160 84% 39%;
+    --chart-2: 180 70% 45%;
+    --chart-3: 142 71% 45%;
+    --chart-4: 175 60% 35%;
+    --chart-5: 162 60% 50%;
   }
   .dark {
     --background: 224 71% 4%; /* Very Deep Navy */
@@ -45,6 +52,13 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 160 84% 39%;
+
+    /* Dark Mode Chart Colors */
+    --chart-1: 160 84% 45%;
+    --chart-2: 180 70% 50%;
+    --chart-3: 142 71% 55%;
+    --chart-4: 175 60% 40%;
+    --chart-5: 162 60% 60%;
   }
 }
 

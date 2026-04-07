@@ -30,7 +30,7 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
   }
 
   return (
-    <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" className="text-xs font-bold">
+    <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" className="text-[10px] font-black">
       {`${(percent * 100).toFixed(0)}%`}
     </text>
   );
@@ -40,12 +40,12 @@ const CustomTooltip = ({ active, payload, currency }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0];
       return (
-        <div className="rounded-lg border bg-background p-2 shadow-sm">
-            <div className="flex items-center gap-2">
-                <div style={{width: 10, height: 10, backgroundColor: data.payload.fill, borderRadius: '50%'}}></div>
-                <p className="text-sm font-bold">{data.name}</p>
+        <div className="glass-card rounded-xl p-3 shadow-2xl border-none">
+            <div className="flex items-center gap-2 mb-1">
+                <div className="h-2 w-2 rounded-full" style={{ backgroundColor: data.payload.fill }}></div>
+                <p className="text-xs font-black uppercase tracking-widest">{data.name}</p>
             </div>
-          <p className="text-sm text-muted-foreground pl-4">
+          <p className="text-sm font-bold opacity-80">
             {formatCurrency(data.value, currency)}
           </p>
         </div>
@@ -55,6 +55,12 @@ const CustomTooltip = ({ active, payload, currency }: any) => {
   };
 
 export default function ExpenseChart({ expenses, currency }: ExpenseChartProps) {
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const chartData = React.useMemo(() => {
     const categoryTotals: { [category in Category]?: number } = {};
 
@@ -77,6 +83,7 @@ export default function ExpenseChart({ expenses, currency }: ExpenseChartProps) 
       .sort((a, b) => b.value - a.value);
   }, [expenses]);
 
+  if (!mounted) return <div className="h-full w-full bg-muted/20 animate-pulse rounded-xl" />;
 
   return (
     <ResponsiveContainer width="100%" height="100%">
@@ -89,26 +96,33 @@ export default function ExpenseChart({ expenses, currency }: ExpenseChartProps) 
             cy="50%"
             labelLine={false}
             label={renderCustomizedLabel}
-            outerRadius={100}
-            innerRadius={60}
+            outerRadius="90%"
+            innerRadius="60%"
             paddingAngle={5}
             dataKey="value"
             nameKey="name"
           >
             {chartData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke={COLORS[index % COLORS.length]} />
+              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="transparent" />
             ))}
           </Pie>
           <Legend 
-            iconSize={10} 
+            verticalAlign="bottom"
+            height={36}
+            iconType="circle"
+            iconSize={8}
             wrapperStyle={{
-                fontSize: '0.8rem',
+                fontSize: '10px',
+                fontWeight: 'bold',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                paddingTop: '20px'
             }}
           />
         </PieChart>
       ) : (
-        <div className="flex h-full items-center justify-center rounded-lg border border-dashed">
-          <p className="text-sm text-muted-foreground">No expenses for the selected period.</p>
+        <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-primary/20 bg-primary/5">
+          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">No expenses recorded yet.</p>
         </div>
       )}
     </ResponsiveContainer>
