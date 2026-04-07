@@ -36,7 +36,7 @@ import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { initiateEmailSignUp } from '@/firebase/non-blocking-login';
 import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 
 const GUEST_EXPENSE_LIMIT = 3;
 
