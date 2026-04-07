@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -35,6 +34,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { initiateEmailSignUp } from '@/firebase/non-blocking-login';
+import { cn } from '@/lib/utils';
 
 const GUEST_EXPENSE_LIMIT = 3;
 
@@ -160,7 +160,7 @@ export default function Dashboard() {
   const progressPercent = Math.min((currentCount / GUEST_EXPENSE_LIMIT) * 100, 100);
   
   return (
-    <div className="flex min-h-screen w-full flex-col bg-background selection:bg-primary/20">
+    <div className="flex min-h-screen w-full flex-col selection:bg-primary/20">
       <ExpenseHeader
         onAddExpense={handleAddExpense}
         categoryFilter={categoryFilter}
@@ -172,20 +172,20 @@ export default function Dashboard() {
       <main className="flex flex-1 flex-col gap-8 p-4 md:p-8 max-w-7xl mx-auto w-full">
         <Tabs defaultValue="spending" className="w-full space-y-8">
           <div className="flex items-center justify-between flex-col md:flex-row gap-4">
-            <TabsList className="grid grid-cols-4 w-full md:w-[500px] h-12 bg-muted/50 p-1 border">
-              <TabsTrigger value="spending" className="flex items-center gap-2 data-[state=active]:bg-background">
+            <TabsList className="grid grid-cols-4 w-full md:w-[500px] h-12 glass-card p-1">
+              <TabsTrigger value="spending" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <Wallet className="h-4 w-4" />
                 <span className="hidden sm:inline">Spending</span>
               </TabsTrigger>
-              <TabsTrigger value="advisor" className="flex items-center gap-2 data-[state=active]:bg-background">
+              <TabsTrigger value="advisor" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <MessageSquareText className="h-4 w-4" />
                 <span className="hidden sm:inline">Advisor</span>
               </TabsTrigger>
-              <TabsTrigger value="insights" className="flex items-center gap-2 data-[state=active]:bg-background">
+              <TabsTrigger value="insights" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <Lightbulb className="h-4 w-4" />
                 <span className="hidden sm:inline">Planning</span>
               </TabsTrigger>
-              <TabsTrigger value="eco" className="flex items-center gap-2 data-[state=active]:bg-background data-[state=active]:text-emerald-600">
+              <TabsTrigger value="eco" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <Leaf className="h-4 w-4" />
                 <span className="hidden sm:inline">Eco</span>
               </TabsTrigger>
@@ -214,7 +214,7 @@ export default function Dashboard() {
                 />
 
                 <div className="grid gap-8 md:grid-cols-2">
-                  <Card className="shadow-lg border-none bg-card/50 backdrop-blur-sm overflow-hidden h-fit">
+                  <Card className="glass-card h-fit">
                     <CardHeader>
                       <CardTitle className="text-xl">Spending Breakdown</CardTitle>
                       <CardDescription>Visual category distribution for {format(currentMonth, 'MMMM yyyy')}</CardDescription>
@@ -226,7 +226,7 @@ export default function Dashboard() {
                     </CardContent>
                   </Card>
 
-                  <Card className="shadow-lg border-none bg-card/50 backdrop-blur-sm overflow-hidden h-fit">
+                  <Card className="glass-card h-fit">
                     <CardHeader>
                       <CardTitle className="text-xl">Monthly Pulse</CardTitle>
                       <CardDescription>Key metrics for the current period</CardDescription>
@@ -256,7 +256,7 @@ export default function Dashboard() {
                   </Card>
                 </div>
 
-                <Card className="shadow-lg border-none bg-card/50 backdrop-blur-sm overflow-hidden">
+                <Card className="glass-card">
                   <CardHeader>
                     <CardTitle className="text-xl">Recent Expenses</CardTitle>
                     <CardDescription>Activity for the selected month</CardDescription>
@@ -310,17 +310,16 @@ export default function Dashboard() {
         </Tabs>
       </main>
 
-      {/* Sign-up Modal (Blocks Guest after 3 expenses) */}
+      {/* Sign-up Modal */}
       <Dialog 
         open={showSignUpPrompt} 
         onOpenChange={(open) => {
-          // If guest has hit limit, don't allow closing
           if (user?.isAnonymous && currentCount >= GUEST_EXPENSE_LIMIT) return;
           setShowSignUpPrompt(open);
         }}
       >
-        <DialogContent className="sm:max-w-md p-0 overflow-hidden border-none shadow-3xl bg-background/90 backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-300">
-          <div className="bg-gradient-to-br from-primary via-primary/90 to-accent p-8 text-primary-foreground relative overflow-hidden">
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden border-none glass-card animate-in fade-in zoom-in-95 duration-300">
+          <div className="bg-gradient-to-br from-primary via-emerald-600 to-teal-700 p-8 text-primary-foreground relative overflow-hidden">
             <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
             <DialogHeader className="relative z-10">
               <div className="h-12 w-12 rounded-2xl bg-white/20 flex items-center justify-center mb-4">
@@ -365,10 +364,6 @@ export default function Dashboard() {
                 <UserPlus className="mr-3 h-6 w-6" /> CREATE ACCOUNT
               </Button>
             </form>
-            
-            <p className="text-center text-xs text-muted-foreground font-medium">
-              By signing up, your {currentCount} guest expenses will be safely moved to your new account.
-            </p>
           </div>
         </DialogContent>
       </Dialog>

@@ -10,51 +10,41 @@
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    --primary: 262 80% 58%;
+    --primary: 160 84% 39%; /* Emerald Green */
     --primary-foreground: 0 0% 100%;
     --secondary: 222 47% 11%;
     --secondary-foreground: 0 0% 100%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 300 80% 60%;
+    --accent: 180 70% 45%; /* Teal */
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 262 80% 58%;
-    --chart-1: 262 80% 58%;
-    --chart-2: 300 80% 60%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
+    --ring: 160 84% 39%;
+    --radius: 1rem;
   }
   .dark {
-    --background: 222 47% 11%;
+    --background: 224 71% 4%; /* Very Deep Navy */
     --foreground: 210 40% 98%;
-    --card: 222 47% 11%;
+    --card: 224 71% 4%;
     --card-foreground: 210 40% 98%;
-    --popover: 222 47% 11%;
+    --popover: 224 71% 4%;
     --popover-foreground: 210 40% 98%;
-    --primary: 262 80% 58%;
+    --primary: 160 84% 39%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 98%;
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-    --accent: 300 80% 60%;
+    --accent: 180 70% 45%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 217.2 32.6% 22.5%;
-    --input: 217.2 32.6% 22.5%;
-    --ring: 262 80% 58%;
-    --chart-1: 262 80% 58%;
-    --chart-2: 300 80% 60%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 160 84% 39%;
   }
 }
 
@@ -65,4 +55,37 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+@layer utilities {
+  .animate-float {
+    animation: float 20s ease-in-out infinite;
+  }
+  .animate-float-delayed {
+    animation: float 25s ease-in-out infinite -5s;
+  }
+  .animate-float-slow {
+    animation: float 30s ease-in-out infinite -10s;
+  }
+  
+  @keyframes float {
+    0%, 100% {
+      transform: translate(0, 0) scale(1);
+    }
+    33% {
+      transform: translate(30px, -50px) scale(1.1);
+    }
+    66% {
+      transform: translate(-20px, 20px) scale(0.9);
+    }
+  }
+}
+
+.glass-card {
+  @apply bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-2xl;
+}
+
+.bg-dot-pattern {
+  background-image: radial-gradient(circle, currentColor 1px, transparent 1px);
+  background-size: 30px 30px;
 }

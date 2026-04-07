@@ -43,12 +43,14 @@ export function CarbonFootprintView({ expenses, currency }: CarbonFootprintViewP
     for (let i = 0; i < 30; i++) {
       const checkDate = subDays(today, i);
       const dayExpenses = expenses.filter(e => isSameDay(new Date(e.date), checkDate));
+      if (dayExpenses.length === 0) continue;
+
       const dayImpact = dayExpenses.reduce((sum, e) => sum + getCarbonImpact(e.amount, e.category), 0);
       
       // A "low carbon day" is under 5kg
-      if (dayImpact < 5 && dayExpenses.length > 0) {
+      if (dayImpact < 5) {
         count++;
-      } else if (dayExpenses.length > 0) {
+      } else {
         break;
       }
     }
@@ -65,7 +67,7 @@ export function CarbonFootprintView({ expenses, currency }: CarbonFootprintViewP
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {/* Total Carbon Card */}
-        <Card className="relative overflow-hidden border-none bg-gradient-to-br from-emerald-600 to-teal-700 text-white">
+        <Card className="relative overflow-hidden border-none bg-gradient-to-br from-emerald-600 to-teal-700 text-white shadow-xl">
           <div className="absolute top-0 right-0 p-4 opacity-10">
             <Leaf className="h-20 w-20" />
           </div>
@@ -79,7 +81,7 @@ export function CarbonFootprintView({ expenses, currency }: CarbonFootprintViewP
         </Card>
 
         {/* Tree Offset Card */}
-        <Card className="relative overflow-hidden border-none bg-gradient-to-br from-brown-500 to-green-700 bg-emerald-50 text-emerald-900 border border-emerald-100">
+        <Card className="glass-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-xs font-bold uppercase tracking-widest text-emerald-600">Nature Offset</CardTitle>
           </CardHeader>
@@ -95,7 +97,7 @@ export function CarbonFootprintView({ expenses, currency }: CarbonFootprintViewP
         </Card>
 
         {/* Green Score Card */}
-        <Card className="border-none bg-card shadow-lg">
+        <Card className="glass-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Eco Grade</CardTitle>
           </CardHeader>
@@ -111,7 +113,7 @@ export function CarbonFootprintView({ expenses, currency }: CarbonFootprintViewP
         </Card>
 
         {/* Streak Card */}
-        <Card className="border-none bg-primary/5">
+        <Card className="glass-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-xs font-bold uppercase tracking-widest text-primary">Eco Streak</CardTitle>
           </CardHeader>
@@ -129,7 +131,7 @@ export function CarbonFootprintView({ expenses, currency }: CarbonFootprintViewP
 
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Footprint Chart */}
-        <Card className="shadow-lg border-none bg-card/50 backdrop-blur-sm">
+        <Card className="glass-card">
           <CardHeader>
             <CardTitle className="text-xl">CO₂ Breakdown</CardTitle>
             <CardDescription>Impact distribution across categories</CardDescription>
@@ -155,7 +157,7 @@ export function CarbonFootprintView({ expenses, currency }: CarbonFootprintViewP
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
                         return (
-                          <div className="bg-background border rounded-lg p-2 shadow-xl text-xs">
+                          <div className="glass-card rounded-lg p-2 shadow-xl text-xs">
                             <p className="font-bold">{payload[0].name}</p>
                             <p className="text-muted-foreground">{payload[0].value.toFixed(1)} kg CO₂</p>
                           </div>
@@ -181,7 +183,7 @@ export function CarbonFootprintView({ expenses, currency }: CarbonFootprintViewP
 
         {/* Suggestions & Impact Table */}
         <div className="space-y-6">
-          <Card className="shadow-lg border-none">
+          <Card className="glass-card border-none">
             <CardHeader>
               <CardTitle className="text-xl flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-emerald-500" />
@@ -195,9 +197,6 @@ export function CarbonFootprintView({ expenses, currency }: CarbonFootprintViewP
                   <div key={cat.name} className="p-4 rounded-xl bg-muted/30 border border-emerald-100/20">
                     <div className="flex items-center gap-2 mb-3">
                        <span className="text-xs font-black uppercase tracking-widest text-emerald-600">{cat.name} Impact</span>
-                       <div className="ml-auto h-1.5 w-24 bg-muted rounded-full overflow-hidden">
-                          <div className="h-full bg-emerald-500" style={{ width: '100%' }} />
-                       </div>
                     </div>
                     <ul className="space-y-3">
                       {(ECO_SUGGESTIONS[cat.name] || ECO_SUGGESTIONS['Others'] || []).map((tip, i) => (
@@ -216,18 +215,6 @@ export function CarbonFootprintView({ expenses, currency }: CarbonFootprintViewP
                 </div>
               )}
             </CardContent>
-          </Card>
-
-          <Card className="border-none bg-orange-500/5">
-             <CardContent className="p-4 flex gap-4">
-                <AlertCircle className="h-5 w-5 text-orange-500 shrink-0" />
-                <div className="space-y-1">
-                  <p className="text-xs font-black text-orange-600 uppercase tracking-tighter">Carbon Warning</p>
-                  <p className="text-xs text-orange-700/80 leading-relaxed">
-                    Transportation and Shopping are currently your largest CO₂ drivers. Small shifts in these areas have the biggest net-positive effect on your grade.
-                  </p>
-                </div>
-             </CardContent>
           </Card>
         </div>
       </div>
