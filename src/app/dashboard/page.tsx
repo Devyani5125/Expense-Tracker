@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -22,7 +23,7 @@ import { FinancialQA } from '@/components/financial-qa';
 import { CarbonFootprintView } from '@/components/carbon-footprint-view';
 import { format, subMonths } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LayoutDashboard, MessageSquareText, Lightbulb, Wallet, Sparkles, UserPlus, Leaf, ShieldAlert } from 'lucide-react';
+import { Wallet, MessageSquareText, Lightbulb, Leaf, ShieldAlert, UserPlus } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -34,9 +35,84 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { initiateEmailSignUp } from '@/firebase/non-blocking-login';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 const GUEST_EXPENSE_LIMIT = 3;
+
+/**
+ * A stunning, tab-specific background component that transitions
+ * colors and floating blobs based on the active tab.
+ */
+const TabBackground = ({ activeTab }: { activeTab: string }) => {
+  const configs: Record<string, { aurora: string; blobs: string[] }> = {
+    spending: {
+      aurora: "from-emerald-500/20 via-teal-500/10 to-transparent",
+      blobs: ["bg-emerald-400/20", "bg-teal-500/10", "bg-green-300/10"],
+    },
+    advisor: {
+      aurora: "from-indigo-600/20 via-purple-500/10 to-transparent",
+      blobs: ["bg-indigo-400/20", "bg-violet-500/10", "bg-purple-300/10"],
+    },
+    insights: {
+      aurora: "from-amber-500/20 via-orange-400/10 to-transparent",
+      blobs: ["bg-yellow-400/20", "bg-orange-500/10", "bg-amber-300/10"],
+    },
+    eco: {
+      aurora: "from-green-700/20 via-emerald-600/10 to-transparent",
+      blobs: ["bg-green-500/20", "bg-emerald-400/10", "bg-teal-300/10"],
+    },
+  };
+
+  const current = configs[activeTab] || configs.spending;
+
+  return (
+    <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden rounded-[2rem]">
+      {/* Aurora Layer */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab + '-aurora'}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.8 }}
+          className={cn("absolute inset-0 bg-gradient-to-b", current.aurora)}
+        />
+      </AnimatePresence>
+
+      {/* Floating Orbs */}
+      <div className="absolute inset-0">
+        {current.blobs.map((blobClass, i) => (
+          <motion.div
+            key={activeTab + '-blob-' + i}
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ 
+              scale: [1, 1.2, 1], 
+              opacity: [0.3, 0.5, 0.3],
+              x: [0, 50, -30, 0],
+              y: [0, -40, 60, 0]
+            }}
+            transition={{ 
+              duration: 10 + i * 5, 
+              repeat: Infinity, 
+              ease: "easeInOut" 
+            }}
+            className={cn(
+              "absolute rounded-full blur-[100px]",
+              blobClass,
+              i === 0 ? "w-[400px] h-[400px] -top-20 -left-20" :
+              i === 1 ? "w-[500px] h-[500px] -bottom-40 -right-20" :
+              "w-[300px] h-[300px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+            )}
+          />
+        ))}
+      </div>
+
+      {/* Noise Texture Overlay */}
+      <div className="absolute inset-0 bg-noise opacity-[0.03] mix-blend-overlay" />
+    </div>
+  );
+};
 
 export default function Dashboard() {
   const { user, isUserLoading } = useUser();
@@ -44,11 +120,11 @@ export default function Dashboard() {
   const auth = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-  const { expenses, addExpense, updateExpense, deleteExpense, isLoading } = useExpenses(user?.uid);
+  const { expenses, addExpense, updateExpense, deleteExpense } = useExpenses(user?.uid);
   const [categoryFilter, setCategoryFilter] = useState<Category | 'all'>('all');
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [activeTab, setActiveTab] = useState('spending');
   
-  // State for SignUp Modal
   const [showSignUpPrompt, setShowSignUpPrompt] = useState(false);
   const [signUpEmail, setSignUpEmail] = useState('');
   const [signUpPassword, setSignUpPassword] = useState('');
@@ -59,7 +135,6 @@ export default function Dashboard() {
     }
   }, [user, isUserLoading, router]);
 
-  // Enforce Guest Limit
   useEffect(() => {
     if (user?.isAnonymous && expenses && expenses.length >= GUEST_EXPENSE_LIMIT) {
       setShowSignUpPrompt(true);
@@ -170,9 +245,9 @@ export default function Dashboard() {
       />
       
       <main className="flex flex-1 flex-col gap-8 p-4 md:p-8 max-w-7xl mx-auto w-full">
-        <Tabs defaultValue="spending" className="w-full space-y-8">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-8">
           <div className="flex items-center justify-between flex-col md:flex-row gap-4">
-            <TabsList className="grid grid-cols-4 w-full md:w-[500px] h-12 glass-card p-1">
+            <TabsList className="grid grid-cols-4 w-full md:w-[500px] h-12 glass-card p-1 relative z-20">
               <TabsTrigger value="spending" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <Wallet className="h-4 w-4" />
                 <span className="hidden sm:inline">Spending</span>
@@ -191,122 +266,137 @@ export default function Dashboard() {
               </TabsTrigger>
             </TabsList>
             
-            <div className="hidden md:block">
+            <div className="hidden md:block relative z-20">
                <DailyReminder expenses={expenses || []} />
             </div>
           </div>
 
-          <TabsContent value="spending" className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <section>
-              <ExpenseStats 
-                expenses={filteredExpenses} 
-                currency={userProfile?.preferredCurrency} 
-                budgetLimit={userProfile?.budgetLimit} 
-              />
-            </section>
+          {/* This container houses the tab backgrounds and content */}
+          <div className="relative min-h-[600px] rounded-[2rem] p-1 md:p-4 overflow-hidden">
+            <TabBackground activeTab={activeTab} />
 
-            <div className="grid gap-8 lg:grid-cols-12">
-              <div className="lg:col-span-12 space-y-8">
-                <BudgetAlert 
-                  total={totalSpent} 
-                  limit={userProfile?.budgetLimit || 0} 
-                  currency={userProfile?.preferredCurrency} 
-                />
+            <div className="relative z-10 w-full h-full">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                >
+                  <TabsContent value="spending" className="m-0 space-y-8">
+                    <section>
+                      <ExpenseStats 
+                        expenses={filteredExpenses} 
+                        currency={userProfile?.preferredCurrency} 
+                        budgetLimit={userProfile?.budgetLimit} 
+                      />
+                    </section>
 
-                <div className="grid gap-8 md:grid-cols-2">
-                  <Card className="glass-card h-fit">
-                    <CardHeader>
-                      <CardTitle className="text-xl">Spending Breakdown</CardTitle>
-                      <CardDescription>Visual category distribution for {format(currentMonth, 'MMMM yyyy')}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="h-[350px] w-full py-4">
-                        <ExpenseChart expenses={filteredExpenses} currency={userProfile?.preferredCurrency} />
-                      </div>
-                    </CardContent>
-                  </Card>
+                    <div className="grid gap-8 lg:grid-cols-12">
+                      <div className="lg:col-span-12 space-y-8">
+                        <BudgetAlert 
+                          total={totalSpent} 
+                          limit={userProfile?.budgetLimit || 0} 
+                          currency={userProfile?.preferredCurrency} 
+                        />
 
-                  <Card className="glass-card h-fit">
-                    <CardHeader>
-                      <CardTitle className="text-xl">Monthly Pulse</CardTitle>
-                      <CardDescription>Key metrics for the current period</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6 pt-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
-                          <p className="text-xs font-bold text-muted-foreground uppercase">Transactions</p>
-                          <p className="text-2xl font-black">{filteredExpenses.length}</p>
+                        <div className="grid gap-8 md:grid-cols-2">
+                          <Card className="glass-card h-fit">
+                            <CardHeader>
+                              <CardTitle className="text-xl">Spending Breakdown</CardTitle>
+                              <CardDescription>Visual category distribution for {format(currentMonth, 'MMMM yyyy')}</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="h-[350px] w-full py-4">
+                                <ExpenseChart expenses={filteredExpenses} currency={userProfile?.preferredCurrency} />
+                              </div>
+                            </CardContent>
+                          </Card>
+
+                          <Card className="glass-card h-fit">
+                            <CardHeader>
+                              <CardTitle className="text-xl">Monthly Pulse</CardTitle>
+                              <CardDescription>Key metrics for the current period</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6 pt-4">
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
+                                  <p className="text-xs font-bold text-muted-foreground uppercase">Transactions</p>
+                                  <p className="text-2xl font-black">{filteredExpenses.length}</p>
+                                </div>
+                                <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
+                                  <p className="text-xs font-bold text-muted-foreground uppercase">Daily Avg</p>
+                                  <p className="text-2xl font-black">{((totalSpent / 30) || 0).toFixed(0)} <span className="text-xs">{userProfile?.preferredCurrency}</span></p>
+                                </div>
+                              </div>
+                              <div className="p-4 rounded-xl bg-muted/30 border">
+                                <p className="text-xs font-bold text-muted-foreground uppercase mb-1">Vs. Last Month</p>
+                                <div className="flex items-end gap-2">
+                                  <p className={`text-2xl font-black ${totalSpent <= lastMonthTotalSpent ? 'text-green-600' : 'text-destructive'}`}>
+                                    {totalSpent <= lastMonthTotalSpent ? '↓' : '↑'}
+                                    {Math.abs(totalSpent - lastMonthTotalSpent).toFixed(2)}
+                                  </p>
+                                  <span className="text-xs font-bold opacity-60 pb-1">{userProfile?.preferredCurrency} Difference</span>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
                         </div>
-                        <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
-                          <p className="text-xs font-bold text-muted-foreground uppercase">Daily Avg</p>
-                          <p className="text-2xl font-black">{((totalSpent / 30) || 0).toFixed(0)} <span className="text-xs">{userProfile?.preferredCurrency}</span></p>
-                        </div>
-                      </div>
-                      <div className="p-4 rounded-xl bg-muted/30 border">
-                        <p className="text-xs font-bold text-muted-foreground uppercase mb-1">Vs. Last Month</p>
-                        <div className="flex items-end gap-2">
-                           <p className={`text-2xl font-black ${totalSpent <= lastMonthTotalSpent ? 'text-green-600' : 'text-destructive'}`}>
-                            {totalSpent <= lastMonthTotalSpent ? '↓' : '↑'}
-                            {Math.abs(totalSpent - lastMonthTotalSpent).toFixed(2)}
-                           </p>
-                           <span className="text-xs font-bold opacity-60 pb-1">{userProfile?.preferredCurrency} Difference</span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
 
-                <Card className="glass-card">
-                  <CardHeader>
-                    <CardTitle className="text-xl">Recent Expenses</CardTitle>
-                    <CardDescription>Activity for the selected month</CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <ExpenseTable 
+                        <Card className="glass-card">
+                          <CardHeader>
+                            <CardTitle className="text-xl">Recent Expenses</CardTitle>
+                            <CardDescription>Activity for the selected month</CardDescription>
+                          </CardHeader>
+                          <CardContent className="p-0">
+                            <ExpenseTable 
+                              expenses={filteredExpenses} 
+                              onUpdateExpense={handleUpdateExpense} 
+                              onDeleteExpense={handleDeleteExpense} 
+                              currency={userProfile?.preferredCurrency} 
+                            />
+                          </CardContent>
+                        </Card>
+                      </div>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="advisor" className="m-0 max-w-4xl mx-auto w-full space-y-8">
+                    <FinancialQuote />
+                    <FinancialQA 
                       expenses={filteredExpenses} 
-                      onUpdateExpense={handleUpdateExpense} 
-                      onDeleteExpense={handleDeleteExpense} 
+                      currency={userProfile?.preferredCurrency} 
+                      budgetLimit={userProfile?.budgetLimit} 
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="insights" className="m-0 space-y-8">
+                    <div className="grid gap-8 lg:grid-cols-2">
+                      <AchievementBadges 
+                        currentTotal={totalSpent} 
+                        prevTotal={lastMonthTotalSpent} 
+                        limit={userProfile?.budgetLimit || 0} 
+                      />
+                      <WhatIfSimulator 
+                        expenses={filteredExpenses} 
+                        currentTotal={totalSpent} 
+                        budgetLimit={userProfile?.budgetLimit || 0} 
+                        currency={userProfile?.preferredCurrency}
+                      />
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="eco" className="m-0">
+                    <CarbonFootprintView 
+                      expenses={filteredExpenses} 
                       currency={userProfile?.preferredCurrency} 
                     />
-                  </CardContent>
-                </Card>
-              </div>
+                  </TabsContent>
+                </motion.div>
+              </AnimatePresence>
             </div>
-          </TabsContent>
-
-          <TabsContent value="advisor" className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-4xl mx-auto w-full">
-            <div className="space-y-8">
-              <FinancialQuote />
-              <FinancialQA 
-                expenses={filteredExpenses} 
-                currency={userProfile?.preferredCurrency} 
-                budgetLimit={userProfile?.budgetLimit} 
-              />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="insights" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="grid gap-8 lg:grid-cols-2">
-              <AchievementBadges 
-                currentTotal={totalSpent} 
-                prevTotal={lastMonthTotalSpent} 
-                limit={userProfile?.budgetLimit || 0} 
-              />
-              <WhatIfSimulator 
-                expenses={filteredExpenses} 
-                currentTotal={totalSpent} 
-                budgetLimit={userProfile?.budgetLimit || 0} 
-                currency={userProfile?.preferredCurrency}
-              />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="eco" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-             <CarbonFootprintView 
-               expenses={filteredExpenses} 
-               currency={userProfile?.preferredCurrency} 
-             />
-          </TabsContent>
+          </div>
         </Tabs>
       </main>
 
