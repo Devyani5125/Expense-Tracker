@@ -23,21 +23,9 @@ import { CarbonFootprintView } from '@/components/carbon-footprint-view';
 import { format, subMonths } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Wallet, MessageSquareText, Lightbulb, Leaf, ShieldAlert, UserPlus, Sparkles, Cpu, Activity, TrendingUp } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
-import { initiateEmailSignUp } from '@/firebase/non-blocking-login';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-
-const GUEST_EXPENSE_LIMIT = 3;
 
 const TabBackground = ({ activeTab }: { activeTab: string }) => {
   const configs: Record<string, { aurora: string; blobs: string[]; animationType?: 'float' | 'rise' }> = {
@@ -118,29 +106,18 @@ const TabBackground = ({ activeTab }: { activeTab: string }) => {
 export default function Dashboard() {
   const { user, isUserLoading } = useUser();
   const { userProfile } = useUserProfile();
-  const auth = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const { expenses, addExpense, updateExpense, deleteExpense } = useExpenses(user?.uid);
   const [categoryFilter, setCategoryFilter] = useState<Category | 'all'>('all');
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [activeTab, setActiveTab] = useState('spending');
-  
-  const [showSignUpPrompt, setShowSignUpPrompt] = useState(false);
-  const [signUpEmail, setSignUpEmail] = useState('');
-  const [signUpPassword, setSignUpPassword] = useState('');
 
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/');
     }
   }, [user, isUserLoading, router]);
-
-  useEffect(() => {
-    if (user?.isAnonymous && expenses && expenses.length >= GUEST_EXPENSE_LIMIT) {
-      setShowSignUpPrompt(true);
-    }
-  }, [user, expenses]);
 
   const filteredExpenses = useMemo(() => {
     if (!expenses) return [];
@@ -171,11 +148,6 @@ export default function Dashboard() {
   }, [expenses, currentMonth]);
 
   const handleAddExpense = (data: Omit<Expense, 'id'>) => {
-    if (user?.isAnonymous && expenses && expenses.length >= GUEST_EXPENSE_LIMIT) {
-      setShowSignUpPrompt(true);
-      return;
-    }
-
     addExpense(data);
     triggerCelebration();
 
@@ -210,30 +182,6 @@ export default function Dashboard() {
     });
   };
 
-  const handleFinalSignUp = (e: React.FormEvent) => {
-    e.preventDefault();
-    initiateEmailSignUp(auth, signUpEmail, signUpPassword)
-      .then(() => {
-        setShowSignUpPrompt(false);
-        toast({
-          title: "Protocol Established",
-          description: "User profile activated. All guest data has been migrated.",
-        });
-      })
-      .catch((error: any) => {
-        let errorMessage = "Credential validation failed. Please check your inputs.";
-        if (error.code === 'auth/email-already-in-use') errorMessage = "This email is already associated with an account.";
-        else if (error.code === 'auth/weak-password') errorMessage = "Security risk: Password is too weak.";
-        else if (error.code === 'auth/invalid-email') errorMessage = "Format error: Invalid email address.";
-
-        toast({
-          variant: "destructive",
-          title: "Access Denied",
-          description: errorMessage,
-        });
-      });
-  };
-
   if (isUserLoading || !user) {
     return (
       <div className="flex h-screen w-full flex-col items-center justify-center gap-4 bg-background">
@@ -250,9 +198,6 @@ export default function Dashboard() {
     );
   }
 
-  const currentCount = expenses?.length || 0;
-  const progressPercent = Math.min((currentCount / GUEST_EXPENSE_LIMIT) * 100, 100);
-  
   return (
     <div className="flex min-h-screen w-full flex-col selection:bg-primary/30 overflow-x-hidden bg-background relative">
       <ExpenseHeader
@@ -482,64 +427,6 @@ export default function Dashboard() {
            </button>
          ))}
       </div>
-
-      {/* Sign-up Modal */}
-      <Dialog 
-        open={showSignUpPrompt} 
-        onOpenChange={(open) => {
-          if (user?.isAnonymous && currentCount >= GUEST_EXPENSE_LIMIT) return;
-          setShowSignUpPrompt(open);
-        }}
-      >
-        <DialogContent className="sm:max-w-md p-0 overflow-hidden border-none glass-card shadow-[0_0_100px_rgba(0,0,0,1)]">
-          <div className="bg-gradient-to-br from-primary/30 via-secondary/20 to-black p-10 text-white relative overflow-hidden border-b border-white/10">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2" />
-            <DialogHeader className="relative z-10">
-              <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-6 border border-primary/30 shadow-2xl">
-                <ShieldAlert className="h-7 w-7 text-primary" />
-              </div>
-              <DialogTitle className="text-4xl font-black tracking-tighter uppercase">Quota Limit Reached</DialogTitle>
-              <DialogDescription className="text-white/70 font-medium text-lg leading-tight mt-4 tracking-tight">
-                Guest session full. Sign up to track unlimited expenses & unlock all premium AI features.
-              </DialogDescription>
-            </DialogHeader>
-          </div>
-          
-          <div className="p-10 space-y-8 bg-black/40">
-            <div className="space-y-4">
-              <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-[0.4em] text-primary">
-                <span>Memory Allocation</span>
-                <span>{currentCount}/{GUEST_EXPENSE_LIMIT} Segments</span>
-              </div>
-              <Progress value={progressPercent} className="h-2 bg-white/5 rounded-full" />
-            </div>
-
-            <form onSubmit={handleFinalSignUp} className="space-y-6">
-              <div className="space-y-4">
-                <Input
-                  type="email"
-                  placeholder="Registry Email"
-                  value={signUpEmail}
-                  onChange={(e) => setSignUpEmail(e.target.value)}
-                  required
-                  className="h-14 bg-white/5 border-white/10 font-black text-lg px-6 focus-visible:ring-primary rounded-2xl text-white"
-                />
-                <Input
-                  type="password"
-                  placeholder="Security Cipher"
-                  value={signUpPassword}
-                  onChange={(e) => setSignUpPassword(e.target.value)}
-                  required
-                  className="h-14 bg-white/5 border-white/10 font-black text-lg px-6 focus-visible:ring-primary rounded-2xl text-white"
-                />
-              </div>
-              <Button type="submit" className="w-full h-16 text-lg font-black uppercase tracking-[0.3em] shadow-[0_0_30px_rgba(var(--primary),0.3)] bg-primary text-primary-foreground hover:scale-[1.02] transition-all rounded-2xl">
-                <UserPlus className="mr-3 h-5 w-5" /> INITIALIZE SYNC
-              </Button>
-            </form>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
