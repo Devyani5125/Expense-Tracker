@@ -22,7 +22,7 @@ import { FinancialQA } from '@/components/financial-qa';
 import { CarbonFootprintView } from '@/components/carbon-footprint-view';
 import { format, subMonths } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Wallet, MessageSquareText, Lightbulb, Leaf, ShieldAlert, UserPlus, Sparkles, Cpu } from 'lucide-react';
+import { Wallet, MessageSquareText, Lightbulb, Leaf, ShieldAlert, UserPlus, Sparkles, Cpu, Activity, TrendingUp } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -42,23 +42,23 @@ const GUEST_EXPENSE_LIMIT = 5;
 const TabBackground = ({ activeTab }: { activeTab: string }) => {
   const configs: Record<string, { aurora: string; blobs: string[]; animationType?: 'float' | 'rise' }> = {
     spending: {
-      aurora: "from-cyan-600/30 via-blue-500/10 to-transparent",
-      blobs: ["bg-cyan-400/20", "bg-blue-500/15", "bg-teal-300/10"],
+      aurora: "from-cyan-600/20 via-blue-500/5 to-transparent",
+      blobs: ["bg-cyan-400/10", "bg-blue-500/10", "bg-teal-300/5"],
       animationType: 'float'
     },
     advisor: {
-      aurora: "from-purple-700/35 via-violet-600/15 to-transparent",
-      blobs: ["bg-purple-500/20", "bg-indigo-600/20", "bg-pink-400/10"],
+      aurora: "from-purple-700/25 via-violet-600/10 to-transparent",
+      blobs: ["bg-purple-500/15", "bg-indigo-600/15", "bg-pink-400/5"],
       animationType: 'float'
     },
     insights: {
-      aurora: "from-blue-600/30 via-cyan-500/10 to-transparent",
-      blobs: ["bg-blue-400/20", "bg-cyan-500/15", "bg-indigo-300/10"],
+      aurora: "from-blue-600/20 via-cyan-500/5 to-transparent",
+      blobs: ["bg-blue-400/15", "bg-cyan-500/10", "bg-indigo-300/5"],
       animationType: 'float'
     },
     eco: {
-      aurora: "from-emerald-800/30 via-teal-700/15 to-transparent",
-      blobs: ["bg-emerald-500/20", "bg-teal-400/15", "bg-green-300/10"],
+      aurora: "from-emerald-800/20 via-teal-700/10 to-transparent",
+      blobs: ["bg-emerald-500/15", "bg-teal-400/10", "bg-green-300/5"],
       animationType: 'rise'
     },
   };
@@ -73,7 +73,7 @@ const TabBackground = ({ activeTab }: { activeTab: string }) => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.8 }}
           className={cn("absolute inset-0 bg-gradient-to-br", current.aurora)}
         />
       </AnimatePresence>
@@ -86,31 +86,31 @@ const TabBackground = ({ activeTab }: { activeTab: string }) => {
             animate={current.animationType === 'rise' ? {
               y: ['110%', '-10%'],
               x: [Math.sin(i) * 50, Math.cos(i) * 50],
-              opacity: [0, 0.4, 0]
+              opacity: [0, 0.3, 0]
             } : { 
-              scale: [1, 1.3, 1], 
-              opacity: [0.2, 0.4, 0.2],
-              x: [0, 60, -40, 0],
-              y: [0, -50, 70, 0]
+              scale: [1, 1.2, 1], 
+              opacity: [0.1, 0.3, 0.1],
+              x: [0, 40, -40, 0],
+              y: [0, -40, 40, 0]
             }}
             transition={{ 
-              duration: current.animationType === 'rise' ? 8 + i * 4 : 15 + i * 5, 
+              duration: current.animationType === 'rise' ? 10 + i * 5 : 20 + i * 5, 
               repeat: Infinity, 
               ease: "easeInOut",
               delay: i * 2
             }}
             className={cn(
-              "absolute rounded-full blur-[110px]",
+              "absolute rounded-full blur-[100px]",
               blobClass,
-              current.animationType === 'rise' ? "w-32 h-32" : 
-              i === 0 ? "w-[450px] h-[450px] -top-20 -left-20" :
-              i === 1 ? "w-[550px] h-[550px] -bottom-40 -right-20" :
-              "w-[350px] h-[350px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+              current.animationType === 'rise' ? "w-40 h-40" : 
+              i === 0 ? "w-[400px] h-[400px] -top-20 -left-20" :
+              i === 1 ? "w-[500px] h-[500px] -bottom-40 -right-20" :
+              "w-[300px] h-[300px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
             )}
           />
         ))}
       </div>
-      <div className="absolute inset-0 bg-noise opacity-[0.06] mix-blend-overlay" />
+      <div className="absolute inset-0 bg-noise opacity-[0.04] mix-blend-overlay" />
     </div>
   );
 };
@@ -212,8 +212,6 @@ export default function Dashboard() {
 
   const handleFinalSignUp = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Handle the non-blocking sign up but catch specific credential errors
     initiateEmailSignUp(auth, signUpEmail, signUpPassword)
       .then(() => {
         setShowSignUpPrompt(false);
@@ -224,14 +222,9 @@ export default function Dashboard() {
       })
       .catch((error: any) => {
         let errorMessage = "Credential validation failed. Please check your inputs.";
-        
-        if (error.code === 'auth/email-already-in-use') {
-          errorMessage = "This email is already associated with an account. Please use a unique identifier.";
-        } else if (error.code === 'auth/weak-password') {
-          errorMessage = "Security risk: Password is too weak. Please use at least 6 characters.";
-        } else if (error.code === 'auth/invalid-email') {
-          errorMessage = "Format error: Please enter a valid email address.";
-        }
+        if (error.code === 'auth/email-already-in-use') errorMessage = "This email is already associated with an account.";
+        else if (error.code === 'auth/weak-password') errorMessage = "Security risk: Password is too weak.";
+        else if (error.code === 'auth/invalid-email') errorMessage = "Format error: Invalid email address.";
 
         toast({
           variant: "destructive",
@@ -261,7 +254,7 @@ export default function Dashboard() {
   const progressPercent = Math.min((currentCount / GUEST_EXPENSE_LIMIT) * 100, 100);
   
   return (
-    <div className="flex min-h-screen w-full flex-col selection:bg-primary/30 overflow-x-hidden bg-[#020617]">
+    <div className="flex min-h-screen w-full flex-col selection:bg-primary/30 overflow-x-hidden bg-[#020617] relative">
       <ExpenseHeader
         onAddExpense={handleAddExpense}
         categoryFilter={categoryFilter}
@@ -270,117 +263,127 @@ export default function Dashboard() {
         setCurrentMonth={setCurrentMonth}
       />
       
-      <main className="flex flex-1 flex-col gap-8 p-4 md:p-8 max-w-7xl mx-auto w-full pb-20">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-8">
-          <div className="flex items-center justify-between flex-col md:flex-row gap-6 relative z-30">
-            <TabsList className="grid grid-cols-4 w-full md:w-[600px] h-14 glass-card p-1 border-white/5 bg-black/40">
-              <TabsTrigger value="spending" className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-[0_0_20px_rgba(var(--primary),0.4)] transition-all">
+      <main className="flex flex-1 flex-col gap-10 p-4 md:p-8 max-w-7xl mx-auto w-full pb-32">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-10">
+          <div className="flex items-center justify-between flex-col md:flex-row gap-8 relative z-30">
+            <div className="space-y-1">
+              <h2 className="text-3xl font-black tracking-tighter uppercase">Operations <span className="text-primary text-glow">Desk</span></h2>
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">System Status: Nominal • Sync Active</p>
+            </div>
+            
+            <TabsList className="grid grid-cols-4 w-full md:w-[640px] h-16 glass-card p-1.5 border-white/5 bg-black/40 rounded-2xl shadow-2xl">
+              <TabsTrigger value="spending" className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-[0_0_25px_rgba(var(--primary),0.5)] transition-all duration-500">
                 <Wallet className="h-4 w-4" />
-                <span className="hidden sm:inline font-black uppercase tracking-widest text-[10px]">Spending</span>
+                <span className="hidden sm:inline font-black uppercase tracking-widest text-[10px]">Dashboard</span>
               </TabsTrigger>
-              <TabsTrigger value="advisor" className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-[0_0_20px_rgba(var(--primary),0.4)] transition-all">
+              <TabsTrigger value="advisor" className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-[0_0_25px_rgba(var(--primary),0.5)] transition-all duration-500">
                 <Cpu className="h-4 w-4" />
                 <span className="hidden sm:inline font-black uppercase tracking-widest text-[10px]">AI Neural</span>
               </TabsTrigger>
-              <TabsTrigger value="insights" className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-[0_0_20px_rgba(var(--primary),0.4)] transition-all">
-                <Lightbulb className="h-4 w-4" />
+              <TabsTrigger value="insights" className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-[0_0_25px_rgba(var(--primary),0.5)] transition-all duration-500">
+                <TrendingUp className="h-4 w-4" />
                 <span className="hidden sm:inline font-black uppercase tracking-widest text-[10px]">Analytics</span>
               </TabsTrigger>
-              <TabsTrigger value="eco" className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-[0_0_20px_rgba(var(--primary),0.4)] transition-all">
+              <TabsTrigger value="eco" className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-[0_0_25px_rgba(var(--primary),0.5)] transition-all duration-500">
                 <Leaf className="h-4 w-4" />
                 <span className="hidden sm:inline font-black uppercase tracking-widest text-[10px]">Eco Sync</span>
               </TabsTrigger>
             </TabsList>
-            
-            <motion.div 
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="hidden md:block w-[350px]"
-            >
-               <DailyReminder expenses={expenses || []} />
-            </motion.div>
           </div>
 
-          <div className="relative min-h-[750px] rounded-[3rem] p-1 md:p-8 overflow-hidden border border-white/5 bg-black/20 shadow-2xl">
+          <div className="relative min-h-[800px] rounded-[3rem] p-4 md:p-10 overflow-hidden border border-white/5 bg-black/30 shadow-3xl">
             <TabBackground activeTab={activeTab} />
 
             <div className="relative z-10 w-full h-full">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeTab}
-                  initial={{ opacity: 0, filter: 'blur(10px)', y: 20 }}
+                  initial={{ opacity: 0, filter: 'blur(15px)', y: 30 }}
                   animate={{ opacity: 1, filter: 'blur(0px)', y: 0 }}
-                  exit={{ opacity: 0, filter: 'blur(10px)', y: -20 }}
-                  transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                  exit={{ opacity: 0, filter: 'blur(15px)', y: -30 }}
+                  transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                 >
-                  <TabsContent value="spending" className="m-0 space-y-10">
-                    <section>
-                      <ExpenseStats 
-                        expenses={filteredExpenses} 
-                        currency={userProfile?.preferredCurrency} 
-                        budgetLimit={userProfile?.budgetLimit} 
-                      />
-                    </section>
+                  <TabsContent value="spending" className="m-0 space-y-12">
+                    <div className="grid gap-10 lg:grid-cols-12 items-start">
+                      <div className="lg:col-span-8 space-y-12">
+                        <section>
+                          <ExpenseStats 
+                            expenses={filteredExpenses} 
+                            currency={userProfile?.preferredCurrency} 
+                            budgetLimit={userProfile?.budgetLimit} 
+                          />
+                        </section>
 
-                    <div className="grid gap-10 lg:grid-cols-12">
-                      <div className="lg:col-span-12 space-y-10">
-                        <BudgetAlert 
-                          total={totalSpent} 
-                          limit={userProfile?.budgetLimit || 0} 
-                          currency={userProfile?.preferredCurrency} 
-                        />
+                        <div className="space-y-6">
+                          <div className="flex items-center justify-between px-2">
+                             <div className="flex items-center gap-3">
+                                <div className="h-8 w-1 bg-primary rounded-full shadow-[0_0_10px_rgba(var(--primary),1)]" />
+                                <h3 className="text-sm font-black uppercase tracking-[0.3em]">Visualized Ledger</h3>
+                             </div>
+                             <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Period: {format(currentMonth, 'MMMM yyyy')}</p>
+                          </div>
+                          
+                          <BudgetAlert 
+                            total={totalSpent} 
+                            limit={userProfile?.budgetLimit || 0} 
+                            currency={userProfile?.preferredCurrency} 
+                          />
 
-                        <div className="grid gap-10 md:grid-cols-2">
-                          <Card className="glass-card border-none shadow-2xl hover:border-primary/20 transition-all group">
-                            <CardHeader>
-                              <CardTitle className="text-xl font-black uppercase tracking-[0.2em] text-glow">Data Distribution</CardTitle>
-                              <CardDescription className="text-xs uppercase tracking-widest opacity-50">Spending Neural Map - {format(currentMonth, 'MMMM yyyy')}</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                              <div className="h-[400px] w-full py-4">
-                                <ExpenseChart expenses={filteredExpenses} currency={userProfile?.preferredCurrency} />
-                              </div>
-                            </CardContent>
-                          </Card>
-
-                          <Card className="glass-card border-none shadow-2xl">
-                            <CardHeader>
-                              <CardTitle className="text-xl font-black uppercase tracking-[0.2em]">Core Metrics</CardTitle>
-                              <CardDescription className="text-xs uppercase tracking-widest opacity-50">Real-time Performance Analysis</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-8 pt-4">
-                              <div className="grid grid-cols-2 gap-6">
-                                <motion.div whileHover={{ scale: 1.05 }} className="p-6 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl">
-                                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-2">Sync Count</p>
-                                  <p className="text-4xl font-black tracking-tighter">{filteredExpenses.length}</p>
-                                </motion.div>
-                                <motion.div whileHover={{ scale: 1.05 }} className="p-6 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl">
-                                  <p className="text-[10px] font-black text-accent uppercase tracking-[0.3em] mb-2">Daily Flux</p>
-                                  <p className="text-4xl font-black tracking-tighter">{((totalSpent / 30) || 0).toFixed(0)}</p>
-                                </motion.div>
-                              </div>
-                              <div className="p-6 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl">
-                                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] mb-2">Sync Delta (vs Previous Cycle)</p>
-                                <div className="flex items-end gap-3">
-                                  <p className={`text-4xl font-black tracking-tighter ${totalSpent <= lastMonthTotalSpent ? 'text-cyan-400' : 'text-rose-500'}`}>
-                                    {totalSpent <= lastMonthTotalSpent ? '-' : '+'}
-                                    {formatCurrency(Math.abs(totalSpent - lastMonthTotalSpent), userProfile?.preferredCurrency)}
-                                  </p>
-                                  <span className="text-[10px] font-black uppercase tracking-widest opacity-40 pb-2">Variance</span>
+                          <div className="grid gap-10 md:grid-cols-2">
+                            <Card className="glass-card border-none shadow-2xl overflow-hidden group">
+                              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                              <CardHeader>
+                                <CardTitle className="text-lg font-black uppercase tracking-[0.2em] text-glow">Capital Map</CardTitle>
+                                <CardDescription className="text-[10px] uppercase tracking-widest opacity-40">Neural Spending Distribution</CardDescription>
+                              </CardHeader>
+                              <CardContent>
+                                <div className="h-[420px] w-full">
+                                  <ExpenseChart expenses={filteredExpenses} currency={userProfile?.preferredCurrency} />
                                 </div>
-                              </div>
-                            </CardContent>
-                          </Card>
+                              </CardContent>
+                            </Card>
+
+                            <div className="space-y-10">
+                              <Card className="glass-card border-none shadow-2xl p-8 space-y-6">
+                                <div className="space-y-1">
+                                  <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">System Capacity</p>
+                                  <h4 className="text-2xl font-black tracking-tight">Efficiency Metrics</h4>
+                                </div>
+                                <div className="space-y-6">
+                                  <div className="space-y-2">
+                                    <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
+                                      <span>Current Drift</span>
+                                      <span>{((totalSpent / (userProfile?.budgetLimit || 1)) * 100).toFixed(1)}%</span>
+                                    </div>
+                                    <Progress value={((totalSpent / (userProfile?.budgetLimit || 1)) * 100)} className="h-1.5 bg-white/5" />
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-4">
+                                     <div className="p-4 rounded-2xl bg-white/5 border border-white/5 text-center">
+                                        <p className="text-[9px] font-black uppercase tracking-widest opacity-40 mb-1">Volume</p>
+                                        <p className="text-2xl font-black">{filteredExpenses.length}</p>
+                                     </div>
+                                     <div className="p-4 rounded-2xl bg-white/5 border border-white/5 text-center">
+                                        <p className="text-[9px] font-black uppercase tracking-widest opacity-40 mb-1">Avg Flux</p>
+                                        <p className="text-2xl font-black">{((totalSpent / 30) || 0).toFixed(0)}</p>
+                                     </div>
+                                  </div>
+                                </div>
+                              </Card>
+                              <FinancialQuote />
+                            </div>
+                          </div>
                         </div>
 
-                        <Card className="glass-card border-none shadow-2xl">
-                          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                            <div>
-                                <CardTitle className="text-xl font-black uppercase tracking-[0.2em]">Transaction Registry</CardTitle>
-                                <CardDescription className="text-xs uppercase tracking-widest opacity-50">Authenticated Sync History</CardDescription>
+                        <Card className="glass-card border-none shadow-3xl">
+                          <CardHeader className="flex flex-row items-center justify-between border-b border-white/5 pb-6">
+                            <div className="space-y-1">
+                                <CardTitle className="text-lg font-black uppercase tracking-[0.2em]">Live Registry</CardTitle>
+                                <CardDescription className="text-[10px] uppercase tracking-widest opacity-40">Authenticated Transaction Streams</CardDescription>
                             </div>
-                            <div className="h-12 w-12 rounded-2xl bg-primary/5 flex items-center justify-center border border-primary/20">
-                                <Cpu className="h-6 w-6 text-primary" />
+                            <div className="flex gap-2">
+                               <div className="h-10 w-10 rounded-xl bg-primary/5 flex items-center justify-center border border-primary/20">
+                                  <Activity className="h-5 w-5 text-primary" />
+                               </div>
                             </div>
                           </CardHeader>
                           <CardContent className="p-0">
@@ -393,10 +396,29 @@ export default function Dashboard() {
                           </CardContent>
                         </Card>
                       </div>
+
+                      <div className="lg:col-span-4 space-y-12 lg:sticky lg:top-24">
+                        <DailyReminder expenses={expenses || []} />
+                        <AchievementBadges 
+                          currentTotal={totalSpent} 
+                          prevTotal={lastMonthTotalSpent} 
+                          limit={userProfile?.budgetLimit || 0} 
+                        />
+                        <WhatIfSimulator 
+                          expenses={filteredExpenses} 
+                          currentTotal={totalSpent} 
+                          budgetLimit={userProfile?.budgetLimit || 0} 
+                          currency={userProfile?.preferredCurrency}
+                        />
+                      </div>
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="advisor" className="m-0 max-w-4xl mx-auto w-full space-y-10">
+                  <TabsContent value="advisor" className="m-0 max-w-4xl mx-auto w-full space-y-12">
+                    <div className="text-center space-y-4 mb-12">
+                       <h3 className="text-4xl font-black tracking-tighter uppercase">AI Intelligence <span className="text-primary text-glow">Core</span></h3>
+                       <p className="text-xs uppercase tracking-[0.4em] opacity-40 max-w-md mx-auto">Analyzing data patterns to optimize your financial trajectory</p>
+                    </div>
                     <FinancialQuote />
                     <FinancialQA 
                       expenses={filteredExpenses} 
@@ -405,9 +427,9 @@ export default function Dashboard() {
                     />
                   </TabsContent>
 
-                  <TabsContent value="insights" className="m-0 space-y-10">
-                    <div className="grid gap-10 lg:grid-cols-2">
-                      <AchievementBadges 
+                  <TabsContent value="insights" className="m-0 space-y-12">
+                    <div className="grid gap-12 lg:grid-cols-2">
+                       <AchievementBadges 
                         currentTotal={totalSpent} 
                         prevTotal={lastMonthTotalSpent} 
                         limit={userProfile?.budgetLimit || 0} 
@@ -419,9 +441,14 @@ export default function Dashboard() {
                         currency={userProfile?.preferredCurrency}
                       />
                     </div>
+                    <Card className="glass-card border-none p-12 text-center">
+                       <Lightbulb className="h-12 w-12 text-primary mx-auto mb-6 opacity-20" />
+                       <h4 className="text-2xl font-black tracking-tight mb-2 uppercase">Pattern Discovery</h4>
+                       <p className="text-xs text-muted-foreground uppercase tracking-widest max-w-sm mx-auto">Unlock deeper insights as you log more transactions. Our engine requires at least 15 entries for deep-cycle analysis.</p>
+                    </Card>
                   </TabsContent>
 
-                  <TabsContent value="eco" className="m-0">
+                  <TabsContent value="eco" className="m-0 space-y-12">
                     <CarbonFootprintView 
                       expenses={filteredExpenses} 
                       currency={userProfile?.preferredCurrency} 
@@ -434,11 +461,32 @@ export default function Dashboard() {
         </Tabs>
       </main>
 
+      {/* Persistent Mobile Tab Bar */}
+      <div className="md:hidden fixed bottom-6 left-6 right-6 z-50 glass-card bg-black/60 backdrop-blur-3xl border-white/10 rounded-3xl h-20 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center justify-around px-4">
+         {[
+           { id: 'spending', icon: Wallet, label: 'Dash' },
+           { id: 'advisor', icon: Cpu, label: 'AI' },
+           { id: 'insights', icon: Activity, label: 'Flow' },
+           { id: 'eco', icon: Leaf, label: 'Eco' }
+         ].map((tab) => (
+           <button 
+             key={tab.id}
+             onClick={() => setActiveTab(tab.id)}
+             className={cn(
+               "flex flex-col items-center gap-1.5 transition-all duration-300",
+               activeTab === tab.id ? "text-primary scale-110" : "text-white/40 hover:text-white/60"
+             )}
+           >
+             <tab.icon className={cn("h-6 w-6", activeTab === tab.id && "drop-shadow-[0_0_8px_rgba(var(--primary),0.8)]")} />
+             <span className="text-[9px] font-black uppercase tracking-widest">{tab.label}</span>
+           </button>
+         ))}
+      </div>
+
       {/* Sign-up Modal */}
       <Dialog 
         open={showSignUpPrompt} 
         onOpenChange={(open) => {
-          // If we've reached the limit, don't allow closing without signing up
           if (user?.isAnonymous && currentCount >= GUEST_EXPENSE_LIMIT) return;
           setShowSignUpPrompt(open);
         }}
