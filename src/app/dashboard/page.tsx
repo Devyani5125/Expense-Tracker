@@ -37,7 +37,7 @@ import { initiateEmailSignUp } from '@/firebase/non-blocking-login';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn, formatCurrency } from '@/lib/utils';
 
-const GUEST_EXPENSE_LIMIT = 3;
+const GUEST_EXPENSE_LIMIT = 5;
 
 const TabBackground = ({ activeTab }: { activeTab: string }) => {
   const configs: Record<string, { aurora: string; blobs: string[]; animationType?: 'float' | 'rise' }> = {
@@ -212,12 +212,33 @@ export default function Dashboard() {
 
   const handleFinalSignUp = (e: React.FormEvent) => {
     e.preventDefault();
-    initiateEmailSignUp(auth, signUpEmail, signUpPassword);
-    setShowSignUpPrompt(false);
-    toast({
-      title: "Protocol Established",
-      description: "User profile activated. All local data is now cloud-synced.",
-    });
+    
+    // Handle the non-blocking sign up but catch specific credential errors
+    initiateEmailSignUp(auth, signUpEmail, signUpPassword)
+      .then(() => {
+        setShowSignUpPrompt(false);
+        toast({
+          title: "Protocol Established",
+          description: "User profile activated. All guest data has been migrated.",
+        });
+      })
+      .catch((error: any) => {
+        let errorMessage = "Credential validation failed. Please check your inputs.";
+        
+        if (error.code === 'auth/email-already-in-use') {
+          errorMessage = "This email is already associated with an account. Please use a unique identifier.";
+        } else if (error.code === 'auth/weak-password') {
+          errorMessage = "Security risk: Password is too weak. Please use at least 6 characters.";
+        } else if (error.code === 'auth/invalid-email') {
+          errorMessage = "Format error: Please enter a valid email address.";
+        }
+
+        toast({
+          variant: "destructive",
+          title: "Access Denied",
+          description: errorMessage,
+        });
+      });
   };
 
   if (isUserLoading || !user) {
@@ -417,6 +438,7 @@ export default function Dashboard() {
       <Dialog 
         open={showSignUpPrompt} 
         onOpenChange={(open) => {
+          // If we've reached the limit, don't allow closing without signing up
           if (user?.isAnonymous && currentCount >= GUEST_EXPENSE_LIMIT) return;
           setShowSignUpPrompt(open);
         }}
@@ -430,7 +452,7 @@ export default function Dashboard() {
               </div>
               <DialogTitle className="text-4xl font-black tracking-tighter uppercase">Quota Limit Reached</DialogTitle>
               <DialogDescription className="text-white/70 font-medium text-lg leading-tight mt-4 tracking-tight">
-                Guest session full. Protocol requires authentication to persist further transaction data.
+                Guest session full. Sign up to track unlimited expenses & unlock all premium AI features.
               </DialogDescription>
             </DialogHeader>
           </div>
