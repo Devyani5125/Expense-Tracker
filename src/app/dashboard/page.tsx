@@ -35,9 +35,9 @@ import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { initiateEmailSignUp } from '@/firebase/non-blocking-login';
 import { motion, AnimatePresence } from 'framer-motion';
-import { cn, formatCurrency } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
-const GUEST_EXPENSE_LIMIT = 5;
+const GUEST_EXPENSE_LIMIT = 3;
 
 const TabBackground = ({ activeTab }: { activeTab: string }) => {
   const configs: Record<string, { aurora: string; blobs: string[]; animationType?: 'float' | 'rise' }> = {
@@ -236,7 +236,7 @@ export default function Dashboard() {
 
   if (isUserLoading || !user) {
     return (
-      <div className="flex h-screen w-full flex-col items-center justify-center gap-4 bg-[#020617]">
+      <div className="flex h-screen w-full flex-col items-center justify-center gap-4 bg-background">
         <motion.div 
           animate={{ rotate: 360 }}
           transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
@@ -254,7 +254,7 @@ export default function Dashboard() {
   const progressPercent = Math.min((currentCount / GUEST_EXPENSE_LIMIT) * 100, 100);
   
   return (
-    <div className="flex min-h-screen w-full flex-col selection:bg-primary/30 overflow-x-hidden bg-[#020617] relative">
+    <div className="flex min-h-screen w-full flex-col selection:bg-primary/30 overflow-x-hidden bg-background relative">
       <ExpenseHeader
         onAddExpense={handleAddExpense}
         categoryFilter={categoryFilter}
@@ -271,7 +271,7 @@ export default function Dashboard() {
               <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">System Status: Nominal • Sync Active</p>
             </div>
             
-            <TabsList className="grid grid-cols-4 w-full md:w-[640px] h-16 glass-card p-1.5 border-white/5 bg-black/40 rounded-2xl shadow-2xl">
+            <TabsList className="grid grid-cols-4 w-full md:w-[640px] h-16 glass-card p-1.5 border-black/5 dark:border-white/5 bg-black/5 dark:bg-black/40 rounded-2xl shadow-2xl">
               <TabsTrigger value="spending" className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-[0_0_25px_rgba(var(--primary),0.5)] transition-all duration-500">
                 <Wallet className="h-4 w-4" />
                 <span className="hidden sm:inline font-black uppercase tracking-widest text-[10px]">Dashboard</span>
@@ -291,7 +291,7 @@ export default function Dashboard() {
             </TabsList>
           </div>
 
-          <div className="relative min-h-[800px] rounded-[3rem] p-4 md:p-10 overflow-hidden border border-white/5 bg-black/30 shadow-3xl">
+          <div className="relative min-h-[800px] rounded-[3rem] p-4 md:p-10 overflow-hidden border border-black/5 dark:border-white/5 bg-black/5 dark:bg-black/30 shadow-3xl">
             <TabBackground activeTab={activeTab} />
 
             <div className="relative z-10 w-full h-full">
@@ -355,14 +355,14 @@ export default function Dashboard() {
                                       <span>Current Drift</span>
                                       <span>{((totalSpent / (userProfile?.budgetLimit || 1)) * 100).toFixed(1)}%</span>
                                     </div>
-                                    <Progress value={((totalSpent / (userProfile?.budgetLimit || 1)) * 100)} className="h-1.5 bg-white/5" />
+                                    <Progress value={((totalSpent / (userProfile?.budgetLimit || 1)) * 100)} className="h-1.5 bg-black/5 dark:bg-white/5" />
                                   </div>
                                   <div className="grid grid-cols-2 gap-4">
-                                     <div className="p-4 rounded-2xl bg-white/5 border border-white/5 text-center">
+                                     <div className="p-4 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 text-center">
                                         <p className="text-[9px] font-black uppercase tracking-widest opacity-40 mb-1">Volume</p>
                                         <p className="text-2xl font-black">{filteredExpenses.length}</p>
                                      </div>
-                                     <div className="p-4 rounded-2xl bg-white/5 border border-white/5 text-center">
+                                     <div className="p-4 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 text-center">
                                         <p className="text-[9px] font-black uppercase tracking-widest opacity-40 mb-1">Avg Flux</p>
                                         <p className="text-2xl font-black">{((totalSpent / 30) || 0).toFixed(0)}</p>
                                      </div>
@@ -375,7 +375,7 @@ export default function Dashboard() {
                         </div>
 
                         <Card className="glass-card border-none shadow-3xl">
-                          <CardHeader className="flex flex-row items-center justify-between border-b border-white/5 pb-6">
+                          <CardHeader className="flex flex-row items-center justify-between border-b border-black/5 dark:border-white/5 pb-6">
                             <div className="space-y-1">
                                 <CardTitle className="text-lg font-black uppercase tracking-[0.2em]">Live Registry</CardTitle>
                                 <CardDescription className="text-[10px] uppercase tracking-widest opacity-40">Authenticated Transaction Streams</CardDescription>
@@ -462,7 +462,7 @@ export default function Dashboard() {
       </main>
 
       {/* Persistent Mobile Tab Bar */}
-      <div className="md:hidden fixed bottom-6 left-6 right-6 z-50 glass-card bg-black/60 backdrop-blur-3xl border-white/10 rounded-3xl h-20 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center justify-around px-4">
+      <div className="md:hidden fixed bottom-6 left-6 right-6 z-50 glass-card bg-white/60 dark:bg-black/60 backdrop-blur-3xl border-black/5 dark:border-white/10 rounded-3xl h-20 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center justify-around px-4">
          {[
            { id: 'spending', icon: Wallet, label: 'Dash' },
            { id: 'advisor', icon: Cpu, label: 'AI' },
@@ -474,7 +474,7 @@ export default function Dashboard() {
              onClick={() => setActiveTab(tab.id)}
              className={cn(
                "flex flex-col items-center gap-1.5 transition-all duration-300",
-               activeTab === tab.id ? "text-primary scale-110" : "text-white/40 hover:text-white/60"
+               activeTab === tab.id ? "text-primary scale-110" : "text-foreground/40 hover:text-foreground/60"
              )}
            >
              <tab.icon className={cn("h-6 w-6", activeTab === tab.id && "drop-shadow-[0_0_8px_rgba(var(--primary),0.8)]")} />
@@ -522,7 +522,7 @@ export default function Dashboard() {
                   value={signUpEmail}
                   onChange={(e) => setSignUpEmail(e.target.value)}
                   required
-                  className="h-14 bg-white/5 border-white/10 font-black text-lg px-6 focus-visible:ring-primary rounded-2xl"
+                  className="h-14 bg-white/5 border-white/10 font-black text-lg px-6 focus-visible:ring-primary rounded-2xl text-white"
                 />
                 <Input
                   type="password"
@@ -530,7 +530,7 @@ export default function Dashboard() {
                   value={signUpPassword}
                   onChange={(e) => setSignUpPassword(e.target.value)}
                   required
-                  className="h-14 bg-white/5 border-white/10 font-black text-lg px-6 focus-visible:ring-primary rounded-2xl"
+                  className="h-14 bg-white/5 border-white/10 font-black text-lg px-6 focus-visible:ring-primary rounded-2xl text-white"
                 />
               </div>
               <Button type="submit" className="w-full h-16 text-lg font-black uppercase tracking-[0.3em] shadow-[0_0_30px_rgba(var(--primary),0.3)] bg-primary text-primary-foreground hover:scale-[1.02] transition-all rounded-2xl">

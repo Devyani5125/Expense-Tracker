@@ -1,7 +1,6 @@
-
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth, useUser } from '@/firebase';
 import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
 import { useRouter } from 'next/navigation';
@@ -28,8 +27,6 @@ export default function PatternLockPage() {
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [lockedUntil, setLockedUntil] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
-
-  const containerRef = useRef<HTMLDivElement>(null);
 
   // Load pattern and lockout status from storage
   useEffect(() => {
@@ -173,14 +170,14 @@ export default function PatternLockPage() {
 
   if (isUserLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#0a0f1e]">
+      <div className="flex h-screen items-center justify-center bg-background">
         <RefreshCw className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen flex-col items-center justify-center bg-[#0a0f1e] text-white overflow-hidden select-none">
+    <div className="flex h-screen flex-col items-center justify-center bg-background text-foreground overflow-hidden select-none">
       {/* Background Ambience */}
       <div className="fixed inset-0 pointer-events-none opacity-30">
         <div className="absolute top-1/4 left-1/4 h-96 w-96 rounded-full bg-primary/20 blur-[120px]" />
@@ -195,7 +192,7 @@ export default function PatternLockPage() {
           exit={{ opacity: 0, y: -20 }}
           className="relative z-10 flex flex-col items-center text-center px-6"
         >
-          <div className="mb-6 rounded-3xl bg-white/5 p-4 backdrop-blur-xl border border-white/10">
+          <div className="mb-6 rounded-3xl bg-black/5 dark:bg-white/5 p-4 backdrop-blur-xl border border-black/5 dark:border-white/10">
             {mode === 'unlock' ? (
               lockedUntil ? <ShieldCheck className="h-10 w-10 text-destructive" /> : <Lock className="h-10 w-10 text-primary" />
             ) : (
@@ -255,7 +252,7 @@ export default function PatternLockPage() {
                         "relative h-6 w-6 rounded-full border-2 transition-all duration-300",
                         isActive 
                           ? status === 'error' ? "bg-destructive border-destructive shadow-[0_0_20px_rgba(var(--destructive),0.5)]" : "bg-primary border-primary shadow-[0_0_20px_rgba(var(--primary),0.8)]"
-                          : "bg-white/10 border-white/20",
+                          : "bg-black/10 dark:bg-white/10 border-black/10 dark:border-white/20",
                         lockedUntil && "opacity-20 cursor-not-allowed"
                       )}
                     >
