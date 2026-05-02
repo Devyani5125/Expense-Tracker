@@ -1,15 +1,19 @@
+
 'use client';
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Sparkles, Send, Loader2, TrendingDown, Lightbulb, MessageSquareQuote, BrainCircuit, RefreshCw } from 'lucide-react';
+import { Sparkles, Send, Loader2, TrendingDown, Lightbulb, BrainCircuit, RefreshCw, History, Search } from 'lucide-react';
 import { analyzeFinancials, FinancialQAOutput } from '@/ai/flows/financial-qa-flow';
 import { Expense } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useUser } from '@/firebase';
+import { useAIHistory } from '@/hooks/use-ai-history';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface FinancialQAProps {
   expenses: Expense[];
@@ -18,15 +22,20 @@ interface FinancialQAProps {
 }
 
 export function FinancialQA({ expenses, currency = 'INR', budgetLimit }: FinancialQAProps) {
+  const { user } = useUser();
+  const { history, saveInteraction } = useAIHistory(user?.uid);
   const [question, setQuestion] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<FinancialQAOutput | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
 
-  const handleAskAI = async (e?: React.FormEvent) => {
+  const handleAskAI = async (e?: React.FormEvent, customQuestion?: string) => {
     if (e) e.preventDefault();
-    if (!question.trim() || isLoading) return;
+    const activeQuestion = customQuestion || question;
+    if (!activeQuestion.trim() || isLoading) return;
 
     setIsLoading(true);
+    setShowHistory(false);
     try {
       const serializedExpenses = expenses.map(e => ({
         title: e.title,
@@ -38,12 +47,13 @@ export function FinancialQA({ expenses, currency = 'INR', budgetLimit }: Financi
 
       const response = await analyzeFinancials({
         expenses: serializedExpenses,
-        question,
+        question: activeQuestion,
         currency,
         budgetLimit,
       });
 
       setResult(response);
+      saveInteraction(activeQuestion, response);
     } catch (error) {
       console.error('AI Q&A Error:', error);
     } finally {
@@ -60,7 +70,7 @@ export function FinancialQA({ expenses, currency = 'INR', budgetLimit }: Financi
   };
 
   return (
-    <Card className="glass-card border-none overflow-hidden relative group">
+    <Card className="glass-card border-none overflow-hidden relative group min-h-[500px]">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 pointer-events-none" />
       
       <CardHeader className="pb-4 relative z-10 border-b border-white/5">
@@ -73,111 +83,178 @@ export function FinancialQA({ expenses, currency = 'INR', budgetLimit }: Financi
               Neural <span className="text-primary text-glow">Consultant</span>
             </CardTitle>
             <CardDescription className="text-[10px] font-bold uppercase tracking-widest opacity-60">
-              Personalized Financial Intelligence • Real-time Sync
+              Personalized Financial Intelligence • Cloud Log Enabled
             </CardDescription>
           </div>
-          {result && (
+          <div className="flex gap-2">
             <Button 
               variant="ghost" 
               size="icon" 
-              onClick={() => { setResult(null); setQuestion(''); }}
-              className="h-8 w-8 rounded-full hover:bg-white/5"
+              onClick={() => setShowHistory(!showHistory)}
+              className={cn("h-8 w-8 rounded-full hover:bg-white/5", showHistory && "text-primary bg-primary/10")}
             >
-              <RefreshCw className="h-4 w-4 opacity-40" />
+              <History className="h-4 w-4" />
             </Button>
-          )}
+            {result && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => { setResult(null); setQuestion(''); setShowHistory(false); }}
+                className="h-8 w-8 rounded-full hover:bg-white/5"
+              >
+                <RefreshCw className="h-4 w-4 opacity-40" />
+              </Button>
+            )}
+          </div>
         </div>
       </CardHeader>
 
       <CardContent className="pt-6 space-y-6 relative z-10">
-        <form onSubmit={handleAskAI} className="flex gap-3">
-          <div className="relative flex-1">
-            <Input
-              placeholder="Ask about spending, savings, or general finance..."
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              className="h-14 bg-white/5 border-white/10 rounded-2xl pl-6 pr-12 focus-visible:ring-primary/40 focus-visible:bg-white/10 transition-all text-sm font-medium"
-              disabled={isLoading}
-            />
-            <div className="absolute right-4 top-1/2 -translate-y-1/2">
-               {isLoading ? <Loader2 className="h-5 w-5 animate-spin text-primary opacity-50" /> : <Sparkles className="h-5 w-5 text-primary opacity-20" />}
-            </div>
-          </div>
-          <Button 
-            type="submit" 
-            disabled={isLoading || !question.trim()}
-            className="h-14 w-14 rounded-2xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 shrink-0"
+        {!showHistory ? (
+          <>
+            <form onSubmit={handleAskAI} className="flex gap-3">
+              <div className="relative flex-1">
+                <Input
+                  placeholder="Ask about spending, savings, or general finance..."
+                  value={question}
+                  onChange={(e) => setQuestion(e.target.value)}
+                  className="h-14 bg-white/5 border-white/10 rounded-2xl pl-6 pr-12 focus-visible:ring-primary/40 focus-visible:bg-white/10 transition-all text-sm font-medium"
+                  disabled={isLoading}
+                />
+                <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                   {isLoading ? <Loader2 className="h-5 w-5 animate-spin text-primary opacity-50" /> : <Sparkles className="h-5 w-5 text-primary opacity-20" />}
+                </div>
+              </div>
+              <Button 
+                type="submit" 
+                disabled={isLoading || !question.trim()}
+                className="h-14 w-14 rounded-2xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 shrink-0"
+              >
+                <Send className="h-5 w-5" />
+              </Button>
+            </form>
+
+            <AnimatePresence mode="wait">
+              {result ? (
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-6"
+                >
+                  <div className={cn(
+                    "p-6 rounded-[2rem] text-sm leading-relaxed border backdrop-blur-3xl shadow-2xl",
+                    result.sentiment === 'positive' ? "bg-emerald-500/5 border-emerald-500/20" :
+                    result.sentiment === 'cautionary' ? "bg-rose-500/5 border-rose-500/20" :
+                    "bg-white/5 border-white/10"
+                  )}>
+                    <div className="flex items-center gap-2 mb-4">
+                      {getSentimentIcon(result.sentiment)}
+                      <span className="text-[10px] font-black uppercase tracking-[0.3em] opacity-60">Intelligence Output</span>
+                    </div>
+                    <div className="text-foreground/90 font-medium leading-relaxed">
+                      {result.answer}
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3">
+                    <h4 className="text-[9px] font-black uppercase tracking-[0.4em] text-primary/60 px-2">Strategic Recommendations</h4>
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      {result.suggestions.map((suggestion, idx) => (
+                        <motion.div 
+                          key={idx}
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: idx * 0.1 }}
+                          className="p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-primary/20 transition-all group flex flex-col gap-3"
+                        >
+                          <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <Lightbulb className="h-4 w-4 text-primary" />
+                          </div>
+                          <p className="text-[11px] leading-snug font-medium opacity-80">{suggestion}</p>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              ) : !isLoading && (
+                <div className="space-y-4">
+                  <span className="text-[9px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 px-2">Neural Suggestions</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {[
+                      "How can I optimize my Food spending?",
+                      "Explain the 50/30/20 rule to me.",
+                      "What's my spending velocity this week?",
+                      "Recommend a simple investment strategy."
+                    ].map((suggested) => (
+                      <button
+                        key={suggested}
+                        onClick={() => {
+                          setQuestion(suggested);
+                        }}
+                        className="text-left text-[11px] p-4 rounded-2xl bg-white/5 hover:bg-primary/10 transition-all border border-transparent hover:border-primary/20 text-muted-foreground hover:text-primary font-medium"
+                      >
+                        {suggested}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </AnimatePresence>
+          </>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="space-y-4"
           >
-            <Send className="h-5 w-5" />
-          </Button>
-        </form>
-
-        <AnimatePresence mode="wait">
-          {result ? (
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-6"
-            >
-              <div className={cn(
-                "p-6 rounded-[2rem] text-sm leading-relaxed border backdrop-blur-3xl shadow-2xl",
-                result.sentiment === 'positive' ? "bg-emerald-500/5 border-emerald-500/20" :
-                result.sentiment === 'cautionary' ? "bg-rose-500/5 border-rose-500/20" :
-                "bg-white/5 border-white/10"
-              )}>
-                <div className="flex items-center gap-2 mb-4">
-                  {getSentimentIcon(result.sentiment)}
-                  <span className="text-[10px] font-black uppercase tracking-[0.3em] opacity-60">Intelligence Output</span>
-                </div>
-                <div className="text-foreground/90 font-medium leading-relaxed">
-                  {result.answer}
-                </div>
-              </div>
-
-              <div className="grid gap-3">
-                <h4 className="text-[9px] font-black uppercase tracking-[0.4em] text-primary/60 px-2">Strategic Recommendations</h4>
-                <div className="grid gap-3 sm:grid-cols-3">
-                  {result.suggestions.map((suggestion, idx) => (
-                    <motion.div 
-                      key={idx}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: idx * 0.1 }}
-                      className="p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-primary/20 transition-all group flex flex-col gap-3"
-                    >
-                      <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Lightbulb className="h-4 w-4 text-primary" />
-                      </div>
-                      <p className="text-[11px] leading-snug font-medium opacity-80">{suggestion}</p>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          ) : !isLoading && (
-            <div className="space-y-4">
-              <span className="text-[9px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 px-2">Neural Suggestions</span>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {[
-                  "How can I optimize my Food spending?",
-                  "Explain the 50/30/20 rule to me.",
-                  "What's my spending velocity this week?",
-                  "Recommend a simple investment strategy."
-                ].map((suggested) => (
-                  <button
-                    key={suggested}
-                    onClick={() => {
-                      setQuestion(suggested);
-                    }}
-                    className="text-left text-[11px] p-4 rounded-2xl bg-white/5 hover:bg-primary/10 transition-all border border-transparent hover:border-primary/20 text-muted-foreground hover:text-primary font-medium"
-                  >
-                    {suggested}
-                  </button>
-                ))}
-              </div>
+            <div className="flex items-center justify-between px-2">
+               <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Intelligence Log</span>
+               <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setShowHistory(false)}
+                  className="text-[9px] font-black uppercase tracking-widest h-6"
+                >
+                  Close History
+                </Button>
             </div>
-          )}
-        </AnimatePresence>
+            
+            <ScrollArea className="h-[350px] pr-4">
+              <div className="space-y-3">
+                {history && history.length > 0 ? (
+                  history.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setResult(item);
+                        setQuestion(item.question);
+                        setShowHistory(false);
+                      }}
+                      className="w-full text-left p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-primary/20 transition-all group"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                           {getSentimentIcon(item.sentiment)}
+                           <span className="text-[8px] font-black uppercase tracking-widest opacity-40">
+                             {item.createdAt?.toDate ? format(item.createdAt.toDate(), 'PP p') : 'Recent'}
+                           </span>
+                        </div>
+                        <Search className="h-3 w-3 opacity-0 group-hover:opacity-40 transition-opacity" />
+                      </div>
+                      <p className="text-[11px] font-bold text-foreground/90 line-clamp-1 mb-1">{item.question}</p>
+                      <p className="text-[10px] text-muted-foreground line-clamp-2 italic leading-relaxed">{item.answer}</p>
+                    </button>
+                  ))
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-48 opacity-40 space-y-3">
+                    <History className="h-8 w-8" />
+                    <p className="text-[10px] font-black uppercase tracking-widest">Log Empty</p>
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+          </motion.div>
+        )}
       </CardContent>
     </Card>
   );
