@@ -215,6 +215,29 @@ export default function AuthPage() {
                 <div className="inline-flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 mb-4 shadow-[0_0_40px_rgba(var(--primary),0.2)]">
                   {authMode === 'login' ? <LogIn className="h-10 w-10 text-primary" /> : <UserPlus className="h-10 w-10 text-primary" />}
                 </div>
+                
+                {/* Two Clear Options: Login vs Signup */}
+                <div className="flex p-1.5 bg-white/5 dark:bg-black/20 rounded-2xl mb-8 border border-white/5">
+                  <button 
+                    onClick={() => setAuthMode('login')}
+                    className={cn(
+                      "flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300",
+                      authMode === 'login' ? "bg-primary text-primary-foreground shadow-[0_0_20px_rgba(var(--primary),0.3)]" : "text-muted-foreground hover:text-foreground opacity-60 hover:opacity-100"
+                    )}
+                  >
+                    1. Login
+                  </button>
+                  <button 
+                    onClick={() => setAuthMode('signup')}
+                    className={cn(
+                      "flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300",
+                      authMode === 'signup' ? "bg-primary text-primary-foreground shadow-[0_0_20px_rgba(var(--primary),0.3)]" : "text-muted-foreground hover:text-foreground opacity-60 hover:opacity-100"
+                    )}
+                  >
+                    2. Signup
+                  </button>
+                </div>
+
                 <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase leading-none">
                   {authMode === 'login' ? 'Operations Access' : 'New Identity'}
                 </h1>
@@ -264,15 +287,6 @@ export default function AuthPage() {
                   )}
                 </Button>
               </form>
-
-              <div className="pt-8 text-center relative z-10 border-t border-white/5">
-                <button 
-                  onClick={() => setAuthMode(authMode === 'login' ? 'signup' : 'login')}
-                  className="text-[10px] font-black uppercase tracking-[0.3em] text-primary hover:text-primary/70 transition-colors"
-                >
-                  {authMode === 'login' ? "Provision new credentials?" : "Already registered? Sign In"}
-                </button>
-              </div>
             </div>
           </motion.div>
         ) : (
