@@ -4,11 +4,12 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Sparkles, Send, Loader2, TrendingDown, Lightbulb, MessageSquareQuote } from 'lucide-react';
+import { Sparkles, Send, Loader2, TrendingDown, Lightbulb, MessageSquareQuote, BrainCircuit, RefreshCw } from 'lucide-react';
 import { analyzeFinancials, FinancialQAOutput } from '@/ai/flows/financial-qa-flow';
 import { Expense } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface FinancialQAProps {
   expenses: Expense[];
@@ -27,7 +28,6 @@ export function FinancialQA({ expenses, currency = 'INR', budgetLimit }: Financi
 
     setIsLoading(true);
     try {
-      // Prepare data for AI
       const serializedExpenses = expenses.map(e => ({
         title: e.title,
         amount: e.amount,
@@ -53,98 +53,131 @@ export function FinancialQA({ expenses, currency = 'INR', budgetLimit }: Financi
 
   const getSentimentIcon = (sentiment: string) => {
     switch (sentiment) {
-      case 'positive': return '✨';
-      case 'cautionary': return '⚠️';
-      default: return '💡';
+      case 'positive': return <Sparkles className="h-4 w-4 text-emerald-400" />;
+      case 'cautionary': return <TrendingDown className="h-4 w-4 text-rose-400" />;
+      default: return <BrainCircuit className="h-4 w-4 text-primary" />;
     }
   };
 
   return (
-    <Card className="shadow-lg border-none bg-gradient-to-br from-primary/5 via-background to-accent/5 overflow-hidden">
-      <CardHeader className="pb-3 bg-primary/5">
+    <Card className="glass-card border-none overflow-hidden relative group">
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 pointer-events-none" />
+      
+      <CardHeader className="pb-4 relative z-10 border-b border-white/5">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary animate-pulse" />
-              Smart Financial Q&A
+            <CardTitle className="text-xl font-black uppercase tracking-tighter flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
+                <BrainCircuit className="h-6 w-6 text-primary" />
+              </div>
+              Neural <span className="text-primary text-glow">Consultant</span>
             </CardTitle>
-            <CardDescription className="text-xs">Ask anything about your spending</CardDescription>
+            <CardDescription className="text-[10px] font-bold uppercase tracking-widest opacity-60">
+              Personalized Financial Intelligence • Real-time Sync
+            </CardDescription>
           </div>
+          {result && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => { setResult(null); setQuestion(''); }}
+              className="h-8 w-8 rounded-full hover:bg-white/5"
+            >
+              <RefreshCw className="h-4 w-4 opacity-40" />
+            </Button>
+          )}
         </div>
       </CardHeader>
-      <CardContent className="pt-4 space-y-4">
-        <form onSubmit={handleAskAI} className="flex gap-2">
-          <Input
-            placeholder="e.g., How can I save more this month?"
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            className="bg-background/50 border-primary/20 focus-visible:ring-primary"
-            disabled={isLoading}
-          />
+
+      <CardContent className="pt-6 space-y-6 relative z-10">
+        <form onSubmit={handleAskAI} className="flex gap-3">
+          <div className="relative flex-1">
+            <Input
+              placeholder="Ask about spending, savings, or general finance..."
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              className="h-14 bg-white/5 border-white/10 rounded-2xl pl-6 pr-12 focus-visible:ring-primary/40 focus-visible:bg-white/10 transition-all text-sm font-medium"
+              disabled={isLoading}
+            />
+            <div className="absolute right-4 top-1/2 -translate-y-1/2">
+               {isLoading ? <Loader2 className="h-5 w-5 animate-spin text-primary opacity-50" /> : <Sparkles className="h-5 w-5 text-primary opacity-20" />}
+            </div>
+          </div>
           <Button 
             type="submit" 
             disabled={isLoading || !question.trim()}
-            size="icon"
-            className="shrink-0 rounded-full"
+            className="h-14 w-14 rounded-2xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 shrink-0"
           >
-            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            <Send className="h-5 w-5" />
           </Button>
         </form>
 
-        {result && (
-          <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-500">
-            <div className={cn(
-              "p-4 rounded-xl text-sm leading-relaxed border-l-4 shadow-sm",
-              result.sentiment === 'positive' ? "bg-green-500/5 border-green-500 text-green-900 dark:text-green-100" :
-              result.sentiment === 'cautionary' ? "bg-destructive/5 border-destructive text-destructive" :
-              "bg-primary/5 border-primary text-foreground"
-            )}>
-              <div className="flex items-center gap-2 mb-2 font-bold uppercase text-[10px] tracking-widest opacity-70">
-                <MessageSquareQuote className="h-3 w-3" />
-                AI Analysis {getSentimentIcon(result.sentiment)}
+        <AnimatePresence mode="wait">
+          {result ? (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-6"
+            >
+              <div className={cn(
+                "p-6 rounded-[2rem] text-sm leading-relaxed border backdrop-blur-3xl shadow-2xl",
+                result.sentiment === 'positive' ? "bg-emerald-500/5 border-emerald-500/20" :
+                result.sentiment === 'cautionary' ? "bg-rose-500/5 border-rose-500/20" :
+                "bg-white/5 border-white/10"
+              )}>
+                <div className="flex items-center gap-2 mb-4">
+                  {getSentimentIcon(result.sentiment)}
+                  <span className="text-[10px] font-black uppercase tracking-[0.3em] opacity-60">Intelligence Output</span>
+                </div>
+                <div className="text-foreground/90 font-medium leading-relaxed">
+                  {result.answer}
+                </div>
               </div>
-              {result.answer}
-            </div>
 
-            <div className="space-y-2">
-              <h4 className="text-[10px] font-black uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                <Lightbulb className="h-3 w-3" /> Actionable Suggestions
-              </h4>
-              <div className="grid gap-2">
-                {result.suggestions.map((suggestion, idx) => (
-                  <div 
-                    key={idx} 
-                    className="flex items-start gap-3 p-3 rounded-lg bg-card/50 border border-primary/10 text-xs hover:bg-card transition-colors group"
+              <div className="grid gap-3">
+                <h4 className="text-[9px] font-black uppercase tracking-[0.4em] text-primary/60 px-2">Strategic Recommendations</h4>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {result.suggestions.map((suggestion, idx) => (
+                    <motion.div 
+                      key={idx}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: idx * 0.1 }}
+                      className="p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-primary/20 transition-all group flex flex-col gap-3"
+                    >
+                      <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Lightbulb className="h-4 w-4 text-primary" />
+                      </div>
+                      <p className="text-[11px] leading-snug font-medium opacity-80">{suggestion}</p>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          ) : !isLoading && (
+            <div className="space-y-4">
+              <span className="text-[9px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 px-2">Neural Suggestions</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {[
+                  "How can I optimize my Food spending?",
+                  "Explain the 50/30/20 rule to me.",
+                  "What's my spending velocity this week?",
+                  "Recommend a simple investment strategy."
+                ].map((suggested) => (
+                  <button
+                    key={suggested}
+                    onClick={() => {
+                      setQuestion(suggested);
+                    }}
+                    className="text-left text-[11px] p-4 rounded-2xl bg-white/5 hover:bg-primary/10 transition-all border border-transparent hover:border-primary/20 text-muted-foreground hover:text-primary font-medium"
                   >
-                    <TrendingDown className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
-                    <span>{suggestion}</span>
-                  </div>
+                    {suggested}
+                  </button>
                 ))}
               </div>
             </div>
-          </div>
-        )}
-
-        {!result && !isLoading && (
-          <div className="grid grid-cols-2 gap-2">
-            {[
-              "Where am I spending most?",
-              "Am I doing better than last month?",
-              "How to stay under budget?",
-              "Analyze my food habits"
-            ].map((suggested) => (
-              <button
-                key={suggested}
-                onClick={() => {
-                  setQuestion(suggested);
-                }}
-                className="text-left text-[10px] p-2 rounded-md bg-muted/50 hover:bg-primary/10 transition-colors text-muted-foreground hover:text-primary border border-transparent hover:border-primary/20"
-              >
-                {suggested}
-              </button>
-            ))}
-          </div>
-        )}
+          )}
+        </AnimatePresence>
       </CardContent>
     </Card>
   );
