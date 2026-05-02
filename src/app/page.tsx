@@ -196,13 +196,7 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="flex h-screen flex-col items-center justify-center bg-background text-foreground overflow-hidden select-none relative">
-      {/* Immersive Background */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] bg-primary/5 blur-[150px] rounded-full animate-pulse" />
-        <div className="absolute inset-0 bg-dot-pattern opacity-[0.05]" />
-      </div>
-
+    <div className="flex min-h-screen flex-col items-center justify-center bg-transparent text-foreground overflow-hidden select-none relative p-4">
       <AnimatePresence mode="wait">
         {!user ? (
           <motion.div
@@ -210,48 +204,48 @@ export default function AuthPage() {
             initial={{ opacity: 0, scale: 0.9, y: 30 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 1.1, y: -30 }}
-            className="z-10 w-full max-w-md px-6"
+            className="z-10 w-full max-w-lg"
           >
-            <div className="glass-card p-10 rounded-[3rem] space-y-10 relative border-white/5 shadow-2xl overflow-hidden group">
+            <div className="glass-card p-8 md:p-12 rounded-[3rem] space-y-10 relative border-white/5 shadow-2xl overflow-hidden group">
               <div className="absolute -top-10 -right-10 p-20 opacity-[0.03] group-hover:scale-110 transition-transform duration-1000">
-                <ShieldCheck className="h-48 w-48 text-primary" />
+                <ShieldCheck className="h-64 w-64 text-primary" />
               </div>
               
-              <div className="text-center space-y-3 relative z-10">
-                <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 mb-4 shadow-[0_0_30px_rgba(var(--primary),0.2)]">
-                  {authMode === 'login' ? <LogIn className="h-8 w-8 text-primary" /> : <UserPlus className="h-8 w-8 text-primary" />}
+              <div className="text-center space-y-4 relative z-10">
+                <div className="inline-flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 mb-4 shadow-[0_0_40px_rgba(var(--primary),0.2)]">
+                  {authMode === 'login' ? <LogIn className="h-10 w-10 text-primary" /> : <UserPlus className="h-10 w-10 text-primary" />}
                 </div>
-                <h1 className="text-4xl font-black tracking-tighter uppercase leading-none">
-                  {authMode === 'login' ? 'Portal Login' : 'Create Access'}
+                <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase leading-none">
+                  {authMode === 'login' ? 'Operations Access' : 'New Identity'}
                 </h1>
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">
+                <p className="text-[10px] md:text-xs font-black uppercase tracking-[0.4em] opacity-40">
                   Global Cloud Synchronization Enabled
                 </p>
               </div>
 
               <form onSubmit={handleAuthSubmit} className="space-y-6 relative z-10">
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60 ml-1">Identity / Email</Label>
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60 ml-2">Identity Channel / Email</Label>
                   <div className="relative group/input">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary opacity-40 group-focus-within/input:opacity-100 transition-opacity" />
+                    <Mail className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-primary opacity-40 group-focus-within/input:opacity-100 transition-opacity" />
                     <Input 
                       type="email" 
                       placeholder="e.g. operative@vault.net"
-                      className="pl-12 bg-white/5 border-none h-14 rounded-2xl focus-visible:ring-primary/40 text-sm font-medium transition-all hover:bg-white/10"
+                      className="pl-14 bg-white/5 border-none h-16 rounded-2xl focus-visible:ring-primary/40 text-base font-medium transition-all hover:bg-white/10"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60 ml-1">Secure Key / Password</Label>
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60 ml-2">Secure Key / Password</Label>
                   <div className="relative group/input">
-                    <Key className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary opacity-40 group-focus-within/input:opacity-100 transition-opacity" />
+                    <Key className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-primary opacity-40 group-focus-within/input:opacity-100 transition-opacity" />
                     <Input 
                       type="password" 
                       placeholder="••••••••"
-                      className="pl-12 bg-white/5 border-none h-14 rounded-2xl focus-visible:ring-primary/40 text-sm font-medium transition-all hover:bg-white/10"
+                      className="pl-14 bg-white/5 border-none h-16 rounded-2xl focus-visible:ring-primary/40 text-base font-medium transition-all hover:bg-white/10"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
@@ -261,22 +255,22 @@ export default function AuthPage() {
                 <Button 
                   type="submit" 
                   disabled={isAuthPending}
-                  className="w-full h-16 rounded-2xl font-black uppercase tracking-widest text-xs shadow-2xl shadow-primary/20 active:scale-[0.97] transition-all bg-primary hover:bg-primary/90"
+                  className="w-full h-16 rounded-2xl font-black uppercase tracking-widest text-sm shadow-2xl shadow-primary/20 active:scale-[0.98] transition-all bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
-                  {isAuthPending ? <RefreshCw className="h-5 w-5 animate-spin" /> : (
-                    <span className="flex items-center gap-3">
-                      Initialize Link <ArrowRight className="h-4 w-4" />
+                  {isAuthPending ? <RefreshCw className="h-6 w-6 animate-spin" /> : (
+                    <span className="flex items-center gap-4">
+                      {authMode === 'login' ? 'Establish Connection' : 'Register Identity'} <ArrowRight className="h-5 w-5" />
                     </span>
                   )}
                 </Button>
               </form>
 
-              <div className="pt-6 text-center relative z-10 border-t border-white/5">
+              <div className="pt-8 text-center relative z-10 border-t border-white/5">
                 <button 
                   onClick={() => setAuthMode(authMode === 'login' ? 'signup' : 'login')}
-                  className="text-[10px] font-black uppercase tracking-[0.2em] text-primary hover:text-primary/70 transition-colors"
+                  className="text-[10px] font-black uppercase tracking-[0.3em] text-primary hover:text-primary/70 transition-colors"
                 >
-                  {authMode === 'login' ? "New operative? Provision account" : "Existing keyholder? Access portal"}
+                  {authMode === 'login' ? "Provision new credentials?" : "Already registered? Sign In"}
                 </button>
               </div>
             </div>
@@ -287,37 +281,37 @@ export default function AuthPage() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.05 }}
-            className="z-10 flex flex-col items-center text-center px-6 w-full max-w-sm"
+            className="z-10 flex flex-col items-center text-center w-full max-w-md"
           >
-            <div className="mb-8 rounded-[2rem] bg-white/5 p-6 backdrop-blur-3xl border border-white/10 shadow-2xl relative group">
-              <div className="absolute inset-0 bg-primary/5 rounded-[2rem] opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+            <div className="mb-10 rounded-[2.5rem] bg-white/5 p-8 backdrop-blur-3xl border border-white/10 shadow-2xl relative group">
+              <div className="absolute inset-0 bg-primary/10 rounded-[2.5rem] opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
               {patternState === 'unlock' ? (
-                lockedUntil ? <ShieldAlert className="h-12 w-12 text-destructive animate-pulse" /> : <Fingerprint className="h-12 w-12 text-primary" />
+                lockedUntil ? <ShieldAlert className="h-16 w-16 text-destructive animate-pulse" /> : <Fingerprint className="h-16 w-16 text-primary" />
               ) : (
-                <Sparkles className="h-12 w-12 text-accent" />
+                <Sparkles className="h-16 w-16 text-accent" />
               )}
             </div>
 
-            <div className="space-y-2 mb-12">
-              <h1 className="text-4xl font-black tracking-tighter uppercase leading-none">
+            <div className="space-y-4 mb-12">
+              <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase leading-none">
                 {lockedUntil ? 'System Lock' : 
-                 patternState === 'set' ? 'New Pattern' : 
-                 patternState === 'confirm' ? 'Repeat Grid' : 'Biometric Access'}
+                 patternState === 'set' ? 'Initial Grid' : 
+                 patternState === 'confirm' ? 'Repeat Path' : 'Grid Access'}
               </h1>
               
-              <p className="max-w-[300px] text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mx-auto leading-relaxed">
+              <p className="max-w-[340px] text-[10px] md:text-xs font-black uppercase tracking-[0.3em] opacity-40 mx-auto leading-relaxed">
                 {lockedUntil 
                   ? `Access restricted. Retry in ${timeLeft}s` 
-                  : patternState === 'set' ? 'Draw a unique 4-dot pattern to lock your data.' 
-                  : patternState === 'confirm' ? 'Verify your security pattern for registration.' 
-                  : 'Enter your biometric sequence to bypass the relay.'}
+                  : patternState === 'set' ? 'Draw a unique security path on the 3x3 grid.' 
+                  : patternState === 'confirm' ? 'Verify your sequence for secure local storage.' 
+                  : 'Enter your biometric pattern to unlock the ledger.'}
               </p>
             </div>
 
             <motion.div
-              animate={status === 'error' ? { x: [-12, 12, -12, 12, 0] } : {}}
+              animate={status === 'error' ? { x: [-15, 15, -15, 15, 0] } : {}}
               transition={{ duration: 0.4 }}
-              className="relative h-[300px] w-[300px] select-none touch-none bg-black/5 dark:bg-white/5 rounded-[2.5rem] border border-white/5 p-4"
+              className="relative h-[320px] w-[320px] md:h-[380px] md:w-[380px] select-none touch-none bg-black/5 dark:bg-white/5 rounded-[3rem] border border-white/5 p-6"
               onMouseLeave={handleDrawingEnd}
               onMouseUp={handleDrawingEnd}
               onTouchEnd={handleDrawingEnd}
@@ -349,9 +343,9 @@ export default function AuthPage() {
                         data-dot-index={i}
                         whileHover={!lockedUntil ? { scale: 1.3 } : {}}
                         className={cn(
-                          "relative h-8 w-8 rounded-full border-2 transition-all duration-500",
+                          "relative h-10 w-10 md:h-12 md:w-12 rounded-full border-2 transition-all duration-500",
                           isActive 
-                            ? status === 'error' ? "bg-destructive border-destructive shadow-[0_0_20px_rgba(var(--destructive),0.5)]" : "bg-primary border-primary shadow-[0_0_25px_rgba(var(--primary),0.8)]"
+                            ? status === 'error' ? "bg-destructive border-destructive shadow-[0_0_20px_rgba(var(--destructive),0.5)]" : "bg-primary border-primary shadow-[0_0_30px_rgba(var(--primary),0.8)]"
                             : "bg-white/5 border-white/10 hover:border-primary/40",
                           lockedUntil && "opacity-10 cursor-not-allowed"
                         )}
@@ -359,7 +353,7 @@ export default function AuthPage() {
                         {isActive && (
                           <motion.div
                             initial={{ scale: 0.5 }}
-                            animate={{ scale: 1.8, opacity: 0 }}
+                            animate={{ scale: 2, opacity: 0 }}
                             transition={{ duration: 0.8, repeat: Infinity }}
                             className={cn(
                               "absolute inset-0 rounded-full",
@@ -374,28 +368,28 @@ export default function AuthPage() {
               </div>
             </motion.div>
 
-            <div className="mt-12 flex flex-col gap-4">
+            <div className="mt-12 flex flex-col gap-6">
               {patternState === 'unlock' && (
                 <button 
                   onClick={() => setPatternState('set')}
-                  className="text-[9px] font-black uppercase tracking-[0.3em] text-primary/60 hover:text-primary transition-colors"
+                  className="text-[10px] font-black uppercase tracking-[0.4em] text-primary/60 hover:text-primary transition-colors"
                 >
                   Reset security pattern?
                 </button>
               )}
               <button 
                 onClick={() => auth.signOut()}
-                className="text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground hover:text-foreground transition-colors"
+                className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground hover:text-foreground transition-colors"
               >
-                Sign out of relay
+                Terminate Session Link
               </button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <footer className="fixed bottom-10 text-[8px] font-black uppercase tracking-[0.6em] text-muted-foreground opacity-20">
-        Quantum Shielding • v2.0-stable
+      <footer className="fixed bottom-12 text-[9px] font-black uppercase tracking-[0.8em] text-muted-foreground opacity-20 pointer-events-none">
+        Quantum Shielding • Active Sync • v2.1
       </footer>
     </div>
   );
