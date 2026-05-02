@@ -14,7 +14,6 @@ import { useUserProfile } from '@/hooks/use-user-profile';
 import { useToast } from '@/hooks/use-toast';
 import { FinancialQuote } from '@/components/financial-quote';
 import { BudgetAlert } from '@/components/budget-alert';
-import { DailyReminder } from '@/components/daily-reminder';
 import { triggerCelebration } from '@/lib/celebration';
 import { AchievementBadges } from '@/components/achievement-badges';
 import { FinancialQA } from '@/components/financial-qa';
@@ -25,6 +24,7 @@ import { Wallet, Leaf, Cpu, Activity, TrendingUp, Sparkles, LayoutDashboard } fr
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils';
+import { DailyReminder } from '@/components/daily-reminder';
 
 export default function Dashboard() {
   const { user, isUserLoading } = useUser();
@@ -121,11 +121,11 @@ export default function Dashboard() {
         setCurrentMonth={setCurrentMonth}
       />
       
-      <main className="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full pb-32">
+      <main className="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full pb-32 md:pb-12">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8 md:space-y-12">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="space-y-1">
-              <h2 className="text-3xl font-black tracking-tighter uppercase leading-none">Operations <span className="text-primary text-glow">Centre</span></h2>
+              <h2 className="text-3xl md:text-4xl font-black tracking-tighter uppercase leading-none">Operations <span className="text-primary text-glow">Centre</span></h2>
               <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">System Status: Active • {format(new Date(), 'PP')}</p>
             </div>
             
@@ -139,27 +139,27 @@ export default function Dashboard() {
                 <TabsTrigger 
                   key={tab.id} 
                   value={tab.id} 
-                  className="rounded-xl px-2 md:px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300"
+                  className="rounded-xl px-2 md:px-6 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300"
                 >
                   <tab.icon className="h-4 w-4 md:mr-2" />
-                  <span className="hidden md:inline font-bold uppercase tracking-widest text-[9px]">{tab.label}</span>
+                  <span className="hidden md:inline font-bold uppercase tracking-widest text-[10px]">{tab.label}</span>
                 </TabsTrigger>
               ))}
             </TabsList>
           </div>
 
-          <div className="relative min-h-[500px]">
+          <div className="relative min-h-[600px]">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeTab}
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
                 className="w-full"
               >
                 <TabsContent value="spending" className="m-0 space-y-8 md:space-y-10">
-                  <div className="grid gap-6 md:gap-8 lg:grid-cols-12">
+                  <div className="grid gap-6 md:gap-8 lg:grid-cols-12 items-start">
                     <div className="lg:col-span-8 space-y-8 md:space-y-10">
                       <ExpenseStats 
                         expenses={filteredExpenses} 
@@ -167,8 +167,8 @@ export default function Dashboard() {
                         budgetLimit={userProfile?.budgetLimit} 
                       />
 
-                      <div className="grid gap-6 md:gap-8 md:grid-cols-2">
-                        <Card className="glass-card border-none overflow-hidden">
+                      <div className="grid gap-6 md:gap-8 xl:grid-cols-2">
+                        <Card className="glass-card border-none overflow-hidden min-h-[400px]">
                           <CardHeader className="pb-4">
                             <CardTitle className="text-sm md:text-lg font-black uppercase tracking-widest">Capital Distribution</CardTitle>
                           </CardHeader>
@@ -204,22 +204,32 @@ export default function Dashboard() {
 
                     <div className="lg:col-span-4 space-y-6 md:space-y-8">
                       <DailyReminder expenses={expenses || []} />
-                      <div className="hidden lg:block space-y-8">
+                      <div className="space-y-6 md:space-y-8">
                         <FinancialQuote />
                         <Card className="glass-card border-none">
                           <CardHeader>
                             <CardTitle className="text-[10px] font-black uppercase tracking-widest opacity-60">System Summary</CardTitle>
                           </CardHeader>
-                          <CardContent className="space-y-4">
+                          <CardContent className="space-y-5">
                             <div className="flex justify-between items-end">
                               <span className="text-[10px] font-bold uppercase opacity-40">Monthly Velocity</span>
                               <span className="text-xl font-black">
-                                {formatCurrency(totalSpent / (new Date().getDate()), userProfile?.preferredCurrency)}/day
+                                {formatCurrency(totalSpent / (new Date().getDate() || 1), userProfile?.preferredCurrency)}/day
                               </span>
                             </div>
                             <div className="flex justify-between items-end">
                               <span className="text-[10px] font-bold uppercase opacity-40">Active Records</span>
                               <span className="text-xl font-black">{filteredExpenses.length}</span>
+                            </div>
+                            <div className="flex justify-between items-end">
+                              <span className="text-[10px] font-bold uppercase opacity-40">Fiscal Delta</span>
+                              <span className={cn(
+                                "text-xl font-black",
+                                totalSpent <= lastMonthTotalSpent ? "text-emerald-500" : "text-destructive"
+                              )}>
+                                {totalSpent <= lastMonthTotalSpent ? "↓" : "↑"}
+                                {((Math.abs(totalSpent - lastMonthTotalSpent) / (lastMonthTotalSpent || 1)) * 100).toFixed(1)}%
+                              </span>
                             </div>
                           </CardContent>
                         </Card>
@@ -228,7 +238,7 @@ export default function Dashboard() {
                   </div>
                 </TabsContent>
 
-                <TabsContent value="advisor" className="m-0 max-w-4xl mx-auto space-y-10">
+                <TabsContent value="advisor" className="m-0 max-w-5xl mx-auto space-y-10">
                   <FinancialQA 
                     expenses={filteredExpenses} 
                     currency={userProfile?.preferredCurrency} 
@@ -248,13 +258,13 @@ export default function Dashboard() {
                           <CardContent>
                             <div className="flex items-end gap-3">
                               <p className={cn(
-                                "text-3xl md:text-4xl font-black",
+                                "text-3xl md:text-5xl font-black",
                                 totalSpent <= lastMonthTotalSpent ? 'text-emerald-500' : 'text-destructive'
                               )}>
                                 {totalSpent <= lastMonthTotalSpent ? '↓' : '↑'}
                                 {formatCurrency(Math.abs(totalSpent - lastMonthTotalSpent), userProfile?.preferredCurrency)}
                               </p>
-                              <span className="text-[10px] font-black opacity-60 pb-1.5 uppercase tracking-tighter">Variance Delta</span>
+                              <span className="text-[10px] font-black opacity-60 pb-2 uppercase tracking-tighter">Variance Delta</span>
                             </div>
                           </CardContent>
                         </Card>
@@ -267,7 +277,7 @@ export default function Dashboard() {
                                <CardDescription className="text-xs">Insight based on current allocation trajectory.</CardDescription>
                             </CardHeader>
                             <CardContent>
-                               <p className="text-xs font-medium opacity-70 leading-relaxed">
+                               <p className="text-sm font-medium opacity-80 leading-relaxed">
                                  {totalSpent > (userProfile?.budgetLimit || 0) 
                                    ? "Threshold exceeded. Recommend immediate reduction in discretionary spending to normalize fiscal stability."
                                    : "Current burn rate is within optimal parameters. Stability index remains high."}
@@ -279,7 +289,7 @@ export default function Dashboard() {
                    </div>
                 </TabsContent>
 
-                <TabsContent value="eco" className="m-0 space-y-8 md:space-y-10">
+                <TabsContent value="eco" className="m-0 space-y-8 md:space-y-10 max-w-6xl mx-auto">
                   <CarbonFootprintView expenses={filteredExpenses} currency={userProfile?.preferredCurrency} />
                 </TabsContent>
               </motion.div>
@@ -304,7 +314,7 @@ export default function Dashboard() {
                activeTab === nav.id ? "text-primary scale-110" : "text-muted-foreground opacity-50"
              )}
            >
-             <nav.icon className={cn("h-6 w-6", activeTab === nav.id && "drop-shadow-[0_0_10px_rgba(var(--primary),0.8)]")} />
+             <nav.icon className={cn("h-6 w-6", activeTab === nav.id && "drop-shadow-[0_0_12px_rgba(var(--primary),0.8)]")} />
              <span className="text-[8px] font-black uppercase tracking-[0.2em]">{nav.label}</span>
            </button>
          ))}
