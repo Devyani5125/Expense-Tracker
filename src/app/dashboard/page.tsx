@@ -204,12 +204,7 @@ export default function Dashboard() {
 
                     <div className="lg:col-span-4 space-y-10">
                       <DailyReminder expenses={expenses || []} />
-                      <WhatIfSimulator 
-                        expenses={filteredExpenses} 
-                        currentTotal={totalSpent} 
-                        budgetLimit={userProfile?.budgetLimit || 0} 
-                        currency={userProfile?.preferredCurrency}
-                      />
+                      <FinancialQuote />
                     </div>
                   </div>
                 </TabsContent>
@@ -224,7 +219,24 @@ export default function Dashboard() {
 
                 <TabsContent value="insights" className="m-0 space-y-10">
                    <div className="grid gap-8 lg:grid-cols-2">
-                      <AchievementBadges currentTotal={totalSpent} prevTotal={lastMonthTotalSpent} limit={userProfile?.budgetLimit || 0} />
+                      <div className="space-y-10">
+                        <AchievementBadges currentTotal={totalSpent} prevTotal={lastMonthTotalSpent} limit={userProfile?.budgetLimit || 0} />
+                        <Card className="glass-card border-none">
+                          <CardHeader>
+                            <CardTitle className="text-lg font-black uppercase tracking-widest">Strategic Overview</CardTitle>
+                            <CardDescription>Simulated performance based on current spending velocity.</CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="flex items-end gap-3">
+                              <p className={`text-3xl font-black ${totalSpent <= lastMonthTotalSpent ? 'text-emerald-500' : 'text-destructive'}`}>
+                                {totalSpent <= lastMonthTotalSpent ? '↓' : '↑'}
+                                {formatCurrency(Math.abs(totalSpent - lastMonthTotalSpent), userProfile?.preferredCurrency)}
+                              </p>
+                              <span className="text-[10px] font-bold opacity-60 pb-1.5 uppercase tracking-tighter">Variance</span>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
                       <WhatIfSimulator 
                         expenses={filteredExpenses} 
                         currentTotal={totalSpent} 
