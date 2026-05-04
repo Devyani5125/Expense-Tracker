@@ -41,7 +41,7 @@ export default function AuthPage() {
   const [lockedUntil, setLockedUntil] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
 
-  // Memoized Dot Coordinates for SVG rendering
+  // Memoized Dot Coordinates for SVG rendering (Relative to a 300x300 viewBox)
   const dotCoords = useMemo(() => {
     return Array.from({ length: DOT_COUNT }).map((_, i) => ({
       x: (i % GRID_SIZE) * 100 + 50,
@@ -324,13 +324,16 @@ export default function AuthPage() {
               ref={gridRef}
               animate={status === 'error' ? { x: [-10, 10, -10, 10, 0] } : {}}
               transition={{ duration: 0.4 }}
-              className="relative h-[320px] w-[320px] md:h-[380px] md:w-[380px] select-none touch-none bg-black/5 dark:bg-white/5 rounded-[3rem] border border-white/5 p-6"
+              className="relative h-[320px] w-[320px] md:h-[380px] md:w-[380px] select-none touch-none bg-black/5 dark:bg-white/5 rounded-[3rem] border border-white/5 p-0 overflow-hidden"
               onMouseLeave={handleDrawingEnd}
               onMouseUp={handleDrawingEnd}
               onTouchEnd={handleDrawingEnd}
             >
-              {/* High Performance SVG Path Rendering */}
-              <svg className="absolute inset-0 z-0 h-full w-full pointer-events-none overflow-visible">
+              {/* High Performance SVG Path Rendering with relative viewBox for perfect dot alignment */}
+              <svg 
+                viewBox="0 0 300 300"
+                className="absolute inset-0 z-10 h-full w-full pointer-events-none overflow-visible"
+              >
                 <path
                   d={pathData}
                   fill="none"
@@ -346,7 +349,7 @@ export default function AuthPage() {
                 />
               </svg>
 
-              <div className="absolute inset-0 z-10 grid grid-cols-3 grid-rows-3">
+              <div className="absolute inset-0 z-20 grid grid-cols-3 grid-rows-3">
                 {Array.from({ length: DOT_COUNT }).map((_, i) => {
                   const isActive = currentPath.includes(i);
                   return (
