@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuth, useUser } from '@/firebase';
 import { initiateEmailSignIn, initiateEmailSignUp } from '@/firebase/non-blocking-login';
 import { useRouter } from 'next/navigation';
@@ -23,6 +23,7 @@ export default function AuthPage() {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
+  const gridRef = useRef<HTMLDivElement>(null);
 
   // Auth Mode State
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
@@ -33,22 +34,26 @@ export default function AuthPage() {
   // Pattern Lock State
   const [patternState, setPatternState] = useState<'unlock' | 'set' | 'confirm' | null>(null);
   const [currentPath, setCurrentPath] = useState<number[]>([]);
-  const [tempPattern, setTempPattern] = useState<string | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [status, setStatus] = useState<'idle' | 'error' | 'success'>('idle');
+  const [tempPattern, setTempPattern] = useState<string | null>(null);
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [lockedUntil, setLockedUntil] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
 
-  // Initialize Pattern Logic based on Auth State
+  // Memoized Dot Coordinates for SVG rendering
+  const dotCoords = useMemo(() => {
+    return Array.from({ length: DOT_COUNT }).map((_, i) => ({
+      x: (i % GRID_SIZE) * 100 + 50,
+      y: Math.floor(i / GRID_SIZE) * 100 + 50,
+    }));
+  }, []);
+
+  // Initialize Pattern Logic
   useEffect(() => {
     if (user) {
       const savedPattern = localStorage.getItem(`pattern_${user.uid}`);
-      if (savedPattern) {
-        setPatternState('unlock');
-      } else {
-        setPatternState('set');
-      }
+      setPatternState(savedPattern ? 'unlock' : 'set');
     } else {
       setPatternState(null);
     }
@@ -102,7 +107,7 @@ export default function AuthPage() {
   };
 
   const handleDotEnter = (index: number) => {
-    if (!isDrawing || currentPath.includes(index)) return;
+    if (!isDrawing || currentPath.includes(index) || lockedUntil) return;
     setCurrentPath(prev => [...prev, index]);
   };
 
@@ -114,7 +119,10 @@ export default function AuthPage() {
     
     if (currentPath.length < MIN_PATTERN_LENGTH) {
       setStatus('error');
-      setCurrentPath([]);
+      setTimeout(() => {
+        setCurrentPath([]);
+        setStatus('idle');
+      }, 500);
       toast({
         variant: "destructive",
         title: "Invalid Pattern",
@@ -137,9 +145,12 @@ export default function AuthPage() {
         setTimeout(() => router.push('/dashboard'), 800);
       } else {
         setStatus('error');
-        setCurrentPath([]);
-        setPatternState('set');
-        setTempPattern(null);
+        setTimeout(() => {
+          setCurrentPath([]);
+          setPatternState('set');
+          setTempPattern(null);
+          setStatus('idle');
+        }, 500);
         toast({ variant: "destructive", title: "Mismatch", description: "Pattern confirmation failed. Try again." });
       }
     } else if (patternState === 'unlock') {
@@ -150,39 +161,27 @@ export default function AuthPage() {
         const newFailCount = failedAttempts + 1;
         setFailedAttempts(newFailCount);
         setStatus('error');
-        setCurrentPath([]);
-        if (newFailCount >= 3) {
-          setLockedUntil(Date.now() + LOCKOUT_DURATION);
-        }
+        setTimeout(() => {
+          setCurrentPath([]);
+          setStatus('idle');
+          if (newFailCount >= 3) {
+            setLockedUntil(Date.now() + LOCKOUT_DURATION);
+          }
+        }, 500);
       }
     }
   };
 
-  const renderPatternLines = () => {
-    const lines: React.ReactNode[] = [];
-    for (let i = 0; i < currentPath.length - 1; i++) {
-      const start = currentPath[i];
-      const end = currentPath[i + 1];
-      const startX = (start % GRID_SIZE) * 100 + 50;
-      const startY = Math.floor(start / GRID_SIZE) * 100 + 50;
-      const endX = (end % GRID_SIZE) * 100 + 50;
-      const endY = Math.floor(end / GRID_SIZE) * 100 + 50;
-      const length = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
-      const angle = Math.atan2(endY - startY, endX - startX) * (180 / Math.PI);
-
-      lines.push(
-        <div
-          key={`${start}-${end}`}
-          className={cn(
-            "absolute h-1.5 origin-left rounded-full transition-colors duration-200 pointer-events-none z-0",
-            status === 'error' ? "bg-destructive/60" : "bg-primary/60 shadow-[0_0_15px_rgba(var(--primary),0.6)]"
-          )}
-          style={{ top: `${startY}px`, left: `${startX}px`, width: `${length}px`, transform: `rotate(${angle}deg)` }}
-        />
-      );
-    }
-    return lines;
-  };
+  // Build SVG Path string for efficient rendering
+  const pathData = useMemo(() => {
+    if (currentPath.length === 0) return "";
+    return currentPath
+      .map((dotIndex, i) => {
+        const { x, y } = dotCoords[dotIndex];
+        return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
+      })
+      .join(' ');
+  }, [currentPath, dotCoords]);
 
   if (isUserLoading) {
     return (
@@ -216,7 +215,6 @@ export default function AuthPage() {
                   {authMode === 'login' ? <LogIn className="h-10 w-10 text-primary" /> : <UserPlus className="h-10 w-10 text-primary" />}
                 </div>
                 
-                {/* Two Clear Options: Login vs Signup */}
                 <div className="flex p-1.5 bg-white/5 dark:bg-black/20 rounded-2xl mb-8 border border-white/5">
                   <button 
                     onClick={() => setAuthMode('login')}
@@ -323,16 +321,30 @@ export default function AuthPage() {
             </div>
 
             <motion.div
-              animate={status === 'error' ? { x: [-15, 15, -15, 15, 0] } : {}}
+              ref={gridRef}
+              animate={status === 'error' ? { x: [-10, 10, -10, 10, 0] } : {}}
               transition={{ duration: 0.4 }}
               className="relative h-[320px] w-[320px] md:h-[380px] md:w-[380px] select-none touch-none bg-black/5 dark:bg-white/5 rounded-[3rem] border border-white/5 p-6"
               onMouseLeave={handleDrawingEnd}
               onMouseUp={handleDrawingEnd}
               onTouchEnd={handleDrawingEnd}
             >
-              <div className="absolute inset-0 z-0">
-                {renderPatternLines()}
-              </div>
+              {/* High Performance SVG Path Rendering */}
+              <svg className="absolute inset-0 z-0 h-full w-full pointer-events-none overflow-visible">
+                <path
+                  d={pathData}
+                  fill="none"
+                  stroke={status === 'error' ? 'hsl(var(--destructive))' : 'hsl(var(--primary))'}
+                  strokeWidth="6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={cn(
+                    "transition-colors duration-200",
+                    status !== 'error' && "drop-shadow-[0_0_12px_rgba(var(--primary),0.6)]"
+                  )}
+                  style={{ opacity: currentPath.length > 0 ? 0.6 : 0 }}
+                />
+              </svg>
 
               <div className="absolute inset-0 z-10 grid grid-cols-3 grid-rows-3">
                 {Array.from({ length: DOT_COUNT }).map((_, i) => {
@@ -343,8 +355,12 @@ export default function AuthPage() {
                       className="flex items-center justify-center"
                       onMouseDown={() => handleDotStart(i)}
                       onMouseEnter={() => handleDotEnter(i)}
-                      onTouchStart={() => handleDotStart(i)}
+                      onTouchStart={(e) => {
+                        e.preventDefault();
+                        handleDotStart(i);
+                      }}
                       onTouchMove={(e) => {
+                        e.preventDefault();
                         const touch = e.touches[0];
                         const element = document.elementFromPoint(touch.clientX, touch.clientY);
                         const dotIndex = element?.getAttribute('data-dot-index');
@@ -355,24 +371,21 @@ export default function AuthPage() {
                     >
                       <motion.div
                         data-dot-index={i}
-                        whileHover={!lockedUntil ? { scale: 1.3 } : {}}
+                        whileHover={!lockedUntil ? { scale: 1.2 } : {}}
                         className={cn(
-                          "relative h-10 w-10 md:h-12 md:w-12 rounded-full border-2 transition-all duration-500",
+                          "relative h-10 w-10 md:h-12 md:w-12 rounded-full border-2 transition-all duration-300 will-change-transform",
                           isActive 
-                            ? status === 'error' ? "bg-destructive border-destructive shadow-[0_0_20px_rgba(var(--destructive),0.5)]" : "bg-primary border-primary shadow-[0_0_30px_rgba(var(--primary),0.8)]"
+                            ? status === 'error' ? "bg-destructive border-destructive shadow-[0_0_15px_rgba(var(--destructive),0.5)] scale-110" : "bg-primary border-primary shadow-[0_0_20px_rgba(var(--primary),0.8)] scale-110"
                             : "bg-white/5 border-white/10 hover:border-primary/40",
                           lockedUntil && "opacity-10 cursor-not-allowed"
                         )}
                       >
-                        {isActive && (
+                        {isActive && status !== 'error' && (
                           <motion.div
-                            initial={{ scale: 0.5 }}
-                            animate={{ scale: 2, opacity: 0 }}
-                            transition={{ duration: 0.8, repeat: Infinity }}
-                            className={cn(
-                              "absolute inset-0 rounded-full",
-                              status === 'error' ? "bg-destructive" : "bg-primary"
-                            )}
+                            initial={{ scale: 0.5, opacity: 0.8 }}
+                            animate={{ scale: 2.2, opacity: 0 }}
+                            transition={{ duration: 1, repeat: Infinity }}
+                            className="absolute inset-0 rounded-full bg-primary"
                           />
                         )}
                       </motion.div>
@@ -385,7 +398,11 @@ export default function AuthPage() {
             <div className="mt-12 flex flex-col gap-6">
               {patternState === 'unlock' && (
                 <button 
-                  onClick={() => setPatternState('set')}
+                  onClick={() => {
+                    localStorage.removeItem(`pattern_${user.uid}`);
+                    setPatternState('set');
+                    setCurrentPath([]);
+                  }}
                   className="text-[10px] font-black uppercase tracking-[0.4em] text-primary/60 hover:text-primary transition-colors"
                 >
                   Reset security pattern?
