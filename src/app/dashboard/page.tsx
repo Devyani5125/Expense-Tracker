@@ -19,12 +19,21 @@ import { FinancialQA } from '@/components/financial-qa';
 import { CarbonFootprintView } from '@/components/carbon-footprint-view';
 import { format, subMonths } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Wallet, Leaf, Cpu, Activity, TrendingUp, Sparkles, LayoutDashboard, ArrowRight } from 'lucide-react';
+import { Wallet, Leaf, Cpu, Activity, TrendingUp, Sparkles, LayoutDashboard, ArrowRight, Quote } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils';
 import { DailyReminder } from '@/components/daily-reminder';
 import { Button } from '@/components/ui/button';
+
+const QUOTES = [
+  "Precision tracking is the foundation of wealth.",
+  "Every expense is a vote for your future.",
+  "Financial freedom begins with local awareness.",
+  "Small leaks can sink great capital ships.",
+  "The goal is not more money, but more options.",
+  "Invest in your habits, harvest your freedom."
+];
 
 export default function Dashboard() {
   const { user, isUserLoading } = useUser();
@@ -35,12 +44,21 @@ export default function Dashboard() {
   const [categoryFilter, setCategoryFilter] = useState<Category | 'all'>('all');
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [activeTab, setActiveTab] = useState('spending');
+  const [quoteIndex, setQuoteIndex] = useState(0);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/');
     }
   }, [user, isUserLoading, router]);
+
+  // Rotate quotes every 8 seconds
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setQuoteIndex((prev) => (prev + 1) % QUOTES.length);
+    }, 8000);
+    return () => clearInterval(timer);
+  }, []);
 
   const filteredExpenses = useMemo(() => {
     if (!expenses) return [];
@@ -124,9 +142,24 @@ export default function Dashboard() {
       <main className="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full pb-32 md:pb-12">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8 md:space-y-12">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div className="space-y-1">
+            <div className="space-y-2">
               <h2 className="text-3xl md:text-4xl font-black tracking-tighter uppercase leading-none">Operations <span className="text-primary text-glow">Centre</span></h2>
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">System Status: Active • {format(new Date(), 'PP')}</p>
+              <div className="flex flex-col gap-1">
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">System Status: Active • {format(new Date(), 'PP')}</p>
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={quoteIndex}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 10 }}
+                    transition={{ duration: 0.5 }}
+                    className="flex items-center gap-2"
+                  >
+                    <Quote className="h-2 w-2 text-primary opacity-60" />
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-primary/70">{QUOTES[quoteIndex]}</p>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
             </div>
             
             <TabsList className="glass-card p-1.5 h-12 md:h-14 w-full md:w-auto grid grid-cols-4 md:flex gap-1 rounded-2xl border-none">
