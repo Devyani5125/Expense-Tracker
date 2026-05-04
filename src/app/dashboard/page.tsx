@@ -20,11 +20,12 @@ import { FinancialQA } from '@/components/financial-qa';
 import { CarbonFootprintView } from '@/components/carbon-footprint-view';
 import { format, subMonths } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Wallet, Leaf, Cpu, Activity, TrendingUp, Sparkles, LayoutDashboard } from 'lucide-react';
+import { Wallet, Leaf, Cpu, Activity, TrendingUp, Sparkles, LayoutDashboard, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils';
 import { DailyReminder } from '@/components/daily-reminder';
+import { Button } from '@/components/ui/button';
 
 export default function Dashboard() {
   const { user, isUserLoading } = useUser();
@@ -200,6 +201,43 @@ export default function Dashboard() {
                           />
                         </CardContent>
                       </Card>
+
+                      {/* Operational Shortcuts */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setActiveTab('advisor')}
+                          className="glass-card border-primary/20 hover:bg-primary/10 h-24 rounded-[2rem] flex flex-col items-center justify-center gap-2 group transition-all"
+                        >
+                          <Cpu className="h-6 w-6 text-primary group-hover:scale-110 transition-transform" />
+                          <div className="text-center">
+                            <span className="block text-[10px] font-black uppercase tracking-widest leading-none">AI Consultant</span>
+                            <span className="text-[8px] opacity-40 uppercase tracking-tighter">Neural Q&A</span>
+                          </div>
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setActiveTab('insights')}
+                          className="glass-card border-secondary/20 hover:bg-secondary/10 h-24 rounded-[2rem] flex flex-col items-center justify-center gap-2 group transition-all"
+                        >
+                          <TrendingUp className="h-6 w-6 text-secondary group-hover:scale-110 transition-transform" />
+                          <div className="text-center">
+                            <span className="block text-[10px] font-black uppercase tracking-widest leading-none">Strategic Flow</span>
+                            <span className="text-[8px] opacity-40 uppercase tracking-tighter">Performance</span>
+                          </div>
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setActiveTab('eco')}
+                          className="glass-card border-emerald-500/20 hover:bg-emerald-500/10 h-24 rounded-[2rem] flex flex-col items-center justify-center gap-2 group transition-all"
+                        >
+                          <Leaf className="h-6 w-6 text-emerald-500 group-hover:scale-110 transition-transform" />
+                          <div className="text-center">
+                            <span className="block text-[10px] font-black uppercase tracking-widest leading-none">Eco Impact</span>
+                            <span className="text-[8px] opacity-40 uppercase tracking-tighter">Sustainability</span>
+                          </div>
+                        </Button>
+                      </div>
                     </div>
 
                     <div className="lg:col-span-4 space-y-6 md:space-y-8">
