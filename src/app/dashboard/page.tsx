@@ -17,6 +17,7 @@ import { triggerCelebration } from '@/lib/celebration';
 import { AchievementBadges } from '@/components/achievement-badges';
 import { FinancialQA } from '@/components/financial-qa';
 import { CarbonFootprintView } from '@/components/carbon-footprint-view';
+import { WhatIfSimulator } from '@/components/what-if-simulator';
 import { format, subMonths } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Wallet, Leaf, Cpu, Activity, TrendingUp, Sparkles, LayoutDashboard, ArrowRight, Quote } from 'lucide-react';
@@ -299,6 +300,12 @@ export default function Dashboard() {
                             </div>
                           </CardContent>
                         </Card>
+                        <WhatIfSimulator 
+                          expenses={filteredExpenses} 
+                          currentTotal={totalSpent} 
+                          budgetLimit={userProfile?.budgetLimit || 0} 
+                          currency={userProfile?.preferredCurrency} 
+                        />
                       </div>
                       <div className="space-y-8">
                          <Card className="glass-card border-none">
