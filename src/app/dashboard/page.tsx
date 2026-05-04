@@ -12,7 +12,6 @@ import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useUserProfile } from '@/hooks/use-user-profile';
 import { useToast } from '@/hooks/use-toast';
-import { FinancialQuote } from '@/components/financial-quote';
 import { BudgetAlert } from '@/components/budget-alert';
 import { triggerCelebration } from '@/lib/celebration';
 import { AchievementBadges } from '@/components/achievement-badges';
@@ -181,7 +180,6 @@ export default function Dashboard() {
                         <div className="space-y-6 md:space-y-8">
                           <BudgetAlert total={totalSpent} limit={userProfile?.budgetLimit || 0} currency={userProfile?.preferredCurrency} />
                           <AchievementBadges currentTotal={totalSpent} prevTotal={lastMonthTotalSpent} limit={userProfile?.budgetLimit || 0} />
-                          <FinancialQuote />
                         </div>
                       </div>
 
@@ -201,49 +199,11 @@ export default function Dashboard() {
                           />
                         </CardContent>
                       </Card>
-
-                      {/* Operational Shortcuts */}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                        <Button 
-                          variant="outline" 
-                          onClick={() => setActiveTab('advisor')}
-                          className="glass-card border-primary/20 hover:bg-primary/10 h-24 rounded-[2rem] flex flex-col items-center justify-center gap-2 group transition-all"
-                        >
-                          <Cpu className="h-6 w-6 text-primary group-hover:scale-110 transition-transform" />
-                          <div className="text-center">
-                            <span className="block text-[10px] font-black uppercase tracking-widest leading-none">AI Consultant</span>
-                            <span className="text-[8px] opacity-40 uppercase tracking-tighter">Neural Q&A</span>
-                          </div>
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          onClick={() => setActiveTab('insights')}
-                          className="glass-card border-secondary/20 hover:bg-secondary/10 h-24 rounded-[2rem] flex flex-col items-center justify-center gap-2 group transition-all"
-                        >
-                          <TrendingUp className="h-6 w-6 text-secondary group-hover:scale-110 transition-transform" />
-                          <div className="text-center">
-                            <span className="block text-[10px] font-black uppercase tracking-widest leading-none">Strategic Flow</span>
-                            <span className="text-[8px] opacity-40 uppercase tracking-tighter">Performance</span>
-                          </div>
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          onClick={() => setActiveTab('eco')}
-                          className="glass-card border-emerald-500/20 hover:bg-emerald-500/10 h-24 rounded-[2rem] flex flex-col items-center justify-center gap-2 group transition-all"
-                        >
-                          <Leaf className="h-6 w-6 text-emerald-500 group-hover:scale-110 transition-transform" />
-                          <div className="text-center">
-                            <span className="block text-[10px] font-black uppercase tracking-widest leading-none">Eco Impact</span>
-                            <span className="text-[8px] opacity-40 uppercase tracking-tighter">Sustainability</span>
-                          </div>
-                        </Button>
-                      </div>
                     </div>
 
                     <div className="lg:col-span-4 space-y-6 md:space-y-8">
                       <DailyReminder expenses={expenses || []} />
                       <div className="space-y-6 md:space-y-8">
-                        <FinancialQuote />
                         <Card className="glass-card border-none">
                           <CardHeader>
                             <CardTitle className="text-[10px] font-black uppercase tracking-widest opacity-60">System Summary</CardTitle>
@@ -306,7 +266,6 @@ export default function Dashboard() {
                             </div>
                           </CardContent>
                         </Card>
-                        <FinancialQuote />
                       </div>
                       <div className="space-y-8">
                          <Card className="glass-card border-none">
