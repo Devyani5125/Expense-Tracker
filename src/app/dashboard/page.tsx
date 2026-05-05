@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -142,6 +143,7 @@ export default function Dashboard() {
       
       <main className="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full pb-32 md:pb-12">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8 md:space-y-12">
+          {/* Header Axis: Aligned with the left edge of the grid */}
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="space-y-2">
               <h2 className="text-3xl md:text-4xl font-black tracking-tighter uppercase leading-none">Operations <span className="text-primary text-glow">Centre</span></h2>
@@ -192,32 +194,33 @@ export default function Dashboard() {
                 transition={{ duration: 0.4, ease: "easeOut" }}
                 className="w-full"
               >
-                <TabsContent value="spending" className="m-0 space-y-8 md:space-y-10">
-                  <div className="grid gap-6 md:gap-8 lg:grid-cols-12 items-start">
-                    <div className="lg:col-span-8 space-y-8 md:space-y-10">
+                <TabsContent value="spending" className="m-0">
+                  {/* Unified Bento Grid: 12 Columns */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                    
+                    {/* Top Row: Global Stats (Full Width of Bento Left) */}
+                    <div className="lg:col-span-12">
                       <ExpenseStats 
                         expenses={filteredExpenses} 
                         currency={userProfile?.preferredCurrency} 
                         budgetLimit={userProfile?.budgetLimit} 
                       />
+                    </div>
 
-                      <div className="grid gap-6 md:gap-8 xl:grid-cols-2">
-                        <Card className="glass-card border-none overflow-hidden min-h-[400px]">
-                          <CardHeader className="pb-4">
-                            <CardTitle className="text-sm md:text-lg font-black uppercase tracking-widest">Capital Distribution</CardTitle>
-                          </CardHeader>
-                          <CardContent className="h-[300px] md:h-[350px]">
-                            <ExpenseChart expenses={filteredExpenses} currency={userProfile?.preferredCurrency} />
-                          </CardContent>
-                        </Card>
-                        
-                        <div className="space-y-6 md:space-y-8">
-                          <BudgetAlert total={totalSpent} limit={userProfile?.budgetLimit || 0} currency={userProfile?.preferredCurrency} />
-                          <AchievementBadges currentTotal={totalSpent} prevTotal={lastMonthTotalSpent} limit={userProfile?.budgetLimit || 0} />
-                        </div>
-                      </div>
+                    {/* Left Main Section (8 Columns) */}
+                    <div className="lg:col-span-8 space-y-8">
+                      {/* Mid Row: Distribution Chart */}
+                      <Card className="glass-card border-none overflow-hidden h-[450px]">
+                        <CardHeader className="pb-4">
+                          <CardTitle className="text-sm md:text-lg font-black uppercase tracking-widest">Capital Distribution</CardTitle>
+                        </CardHeader>
+                        <CardContent className="h-[350px]">
+                          <ExpenseChart expenses={filteredExpenses} currency={userProfile?.preferredCurrency} />
+                        </CardContent>
+                      </Card>
 
-                      <Card className="glass-card border-none overflow-hidden">
+                      {/* Bottom Row: Transaction Table */}
+                      <Card className="glass-card border-none overflow-hidden h-full">
                         <CardHeader className="border-b border-white/5 pb-4 md:pb-6">
                            <div className="flex items-center justify-between">
                               <CardTitle className="text-sm md:text-lg font-black uppercase tracking-widest">Transaction Registry</CardTitle>
@@ -235,37 +238,41 @@ export default function Dashboard() {
                       </Card>
                     </div>
 
-                    <div className="lg:col-span-4 space-y-6 md:space-y-8">
+                    {/* Right Tactical Section (4 Columns) - Docked Components */}
+                    <div className="lg:col-span-4 space-y-8">
                       <DailyReminder expenses={expenses || []} />
-                      <div className="space-y-6 md:space-y-8">
-                        <Card className="glass-card border-none">
-                          <CardHeader>
-                            <CardTitle className="text-[10px] font-black uppercase tracking-widest opacity-60">System Summary</CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-5">
-                            <div className="flex justify-between items-end">
-                              <span className="text-[10px] font-bold uppercase opacity-40">Monthly Velocity</span>
-                              <span className="text-xl font-black">
-                                {formatCurrency(totalSpent / (new Date().getDate() || 1), userProfile?.preferredCurrency)}/day
-                              </span>
-                            </div>
-                            <div className="flex justify-between items-end">
-                              <span className="text-[10px] font-bold uppercase opacity-40">Active Records</span>
-                              <span className="text-xl font-black">{filteredExpenses.length}</span>
-                            </div>
-                            <div className="flex justify-between items-end">
-                              <span className="text-[10px] font-bold uppercase opacity-40">Fiscal Delta</span>
-                              <span className={cn(
-                                "text-xl font-black",
-                                totalSpent <= lastMonthTotalSpent ? "text-emerald-500" : "text-destructive"
-                              )}>
-                                {totalSpent <= lastMonthTotalSpent ? "↓" : "↑"}
-                                {((Math.abs(totalSpent - lastMonthTotalSpent) / (lastMonthTotalSpent || 1)) * 100).toFixed(1)}%
-                              </span>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </div>
+                      
+                      <BudgetAlert total={totalSpent} limit={userProfile?.budgetLimit || 0} currency={userProfile?.preferredCurrency} />
+                      
+                      <AchievementBadges currentTotal={totalSpent} prevTotal={lastMonthTotalSpent} limit={userProfile?.budgetLimit || 0} />
+
+                      <Card className="glass-card border-none">
+                        <CardHeader>
+                          <CardTitle className="text-[10px] font-black uppercase tracking-widest opacity-60">System Summary</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                          <div className="flex justify-between items-end border-b border-white/5 pb-4">
+                            <span className="text-[10px] font-bold uppercase opacity-40">Monthly Velocity</span>
+                            <span className="text-xl font-black">
+                              {formatCurrency(totalSpent / (new Date().getDate() || 1), userProfile?.preferredCurrency)}/day
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-end border-b border-white/5 pb-4">
+                            <span className="text-[10px] font-bold uppercase opacity-40">Active Records</span>
+                            <span className="text-xl font-black">{filteredExpenses.length}</span>
+                          </div>
+                          <div className="flex justify-between items-end">
+                            <span className="text-[10px] font-bold uppercase opacity-40">Fiscal Delta</span>
+                            <span className={cn(
+                              "text-xl font-black",
+                              totalSpent <= lastMonthTotalSpent ? "text-emerald-500" : "text-destructive"
+                            )}>
+                              {totalSpent <= lastMonthTotalSpent ? "↓" : "↑"}
+                              {((Math.abs(totalSpent - lastMonthTotalSpent) / (lastMonthTotalSpent || 1)) * 100).toFixed(1)}%
+                            </span>
+                          </div>
+                        </CardContent>
+                      </Card>
                     </div>
                   </div>
                 </TabsContent>
@@ -279,10 +286,10 @@ export default function Dashboard() {
                 </TabsContent>
 
                 <TabsContent value="insights" className="m-0 space-y-8">
-                   <div className="grid gap-6 md:gap-8 lg:grid-cols-2">
+                   <div className="grid gap-8 lg:grid-cols-2">
                       <div className="space-y-8">
                         <AchievementBadges currentTotal={totalSpent} prevTotal={lastMonthTotalSpent} limit={userProfile?.budgetLimit || 0} />
-                        <Card className="glass-card border-none">
+                        <Card className="glass-card border-none h-full">
                           <CardHeader>
                             <CardTitle className="text-sm md:text-lg font-black uppercase tracking-widest">Strategic Overview</CardTitle>
                             <CardDescription className="text-xs">Performance delta relative to previous cycle.</CardDescription>
@@ -300,14 +307,14 @@ export default function Dashboard() {
                             </div>
                           </CardContent>
                         </Card>
+                      </div>
+                      <div className="space-y-8">
                         <WhatIfSimulator 
                           expenses={filteredExpenses} 
                           currentTotal={totalSpent} 
                           budgetLimit={userProfile?.budgetLimit || 0} 
                           currency={userProfile?.preferredCurrency} 
                         />
-                      </div>
-                      <div className="space-y-8">
                          <Card className="glass-card border-none">
                             <CardHeader>
                                <CardTitle className="text-sm md:text-lg font-black uppercase tracking-widest">Budget Optimization</CardTitle>
@@ -321,7 +328,6 @@ export default function Dashboard() {
                                </p>
                             </CardContent>
                          </Card>
-                         <AchievementBadges currentTotal={totalSpent} prevTotal={lastMonthTotalSpent} limit={userProfile?.budgetLimit || 0} />
                       </div>
                    </div>
                 </TabsContent>
